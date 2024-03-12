@@ -1,7 +1,8 @@
-#ifndef LOGGER_H
-#define LOGGER_H
+#ifndef LOGGER_HPP
+#define LOGGER_HPP
 
 #include <fstream>
+#include "../webserv.hpp"
 
 /**
  * @brief Enum for log levels.
@@ -11,10 +12,6 @@ enum log_level {
     warning, ///< Warning log level
     error, ///< Error log level
 };
-
-#define RED "\033[0;91m"
-#define YELLOW "\033[1;33m"
-#define BLUE "\033[0;94m"
 
 /**
  * @class logger
