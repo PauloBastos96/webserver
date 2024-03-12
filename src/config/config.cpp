@@ -5,7 +5,7 @@
 Config::Config(const std::string &config_file) {
     file.open(config_file.c_str(), std::ios::in);
     if (!file)
-        throw std::runtime_error("Failed to open log file");
+        logger::log("Failed to open Config file", error);
     logger::log("Config file opened", info);
 }
 
