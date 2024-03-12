@@ -15,30 +15,36 @@ CFLAGS = -Werror -Wextra -Wall -O3 -std=c++98 $(INC)
 
 SRC_PATH = src/
 OBJ_PATH = obj/
+LOGS_PATH = logs/
 
 INC = $(addprefix -I, $(shell find . -type d))
 SRC = $(wildcard $(SRC_PATH)*.cpp $(SRC_PATH)**/*.cpp)
-OBJ = $(SRC:$(SRC_PATH)%.c=$(OBJ_PATH)%.o)
+OBJ = $(SRC:$(SRC_PATH)%.cpp=$(OBJ_PATH)%.o)
 
-all: $(NAME)
+$(OBJ_PATH)%.o: $(SRC_PATH)%.cpp | $(OBJ_PATH)
+	 @mkdir -p $(dir $@)
+	 @$(CC) $(CFLAGS) $(INC) -c $< -o $@
+	 @printf "$(EMOJI_HAMMER)	$(BLUE)Compiling $(WHITE)$(NAME)		$(BLUE)%-33s$(WHITE)\r" $(notdir $@)
 
-$(OBJ_PATH)%.o: $(SRC_PATH)%.c | $(OBJ_PATH)
-	@$(CC) $(CFLAGS) $(INC) -c $< -o $@
-	@printf "$(EMOJI_HAMMER)	$(BLUE)Compiling $(WHITE)$(NAME)		$(BLUE)%-33s$(WHITE)\r" $(notdir $@)
+$(LOGS_PATH):
+	@mkdir -p $(LOGS_PATH)
 
 $(OBJ_PATH):
 	@mkdir -p $(OBJ_PATH)
 
-$(NAME): $(OBJ)
+$(NAME): $(OBJ) $(LOGS_PATH)
 	@$(CC) $(CFLAGS) -o $(NAME) $(OBJ)
-	@printf  "\n$(EMOJI_PACKAGE)	$(WHITE)$(NAME)			$(YELLOW)compiled$(WHITE)\n"
+	@printf  "$(EMOJI_PACKAGE)	$(WHITE)$(NAME)				$(YELLOW)compiled$(WHITE)\n"
+
+all: $(NAME)
 
 clean:
 	@rm -rf $(OBJ_PATH)
+	@rm -rf $(LOGS_PATH)
 
 fclean: clean
 	@rm -f $(NAME)
-	@printf "$(EMOJI_TRASH)	$(WHITE)$(NAME)			$(RED)removed$(WHITE)\n"
+	@printf "$(EMOJI_TRASH)	$(WHITE)$(NAME)				$(RED)removed$(WHITE)\n"
 
 re: fclean all
 
