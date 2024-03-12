@@ -16,6 +16,7 @@ CFLAGS = -Werror -Wextra -Wall -O3 -std=c++98 $(INC)
 SRC_PATH = src/
 OBJ_PATH = obj/
 LOGS_PATH = logs/
+CONFIGS_PATH = configs/
 
 INC = $(addprefix -I, $(shell find . -type d))
 SRC = $(wildcard $(SRC_PATH)*.cpp $(SRC_PATH)**/*.cpp)
@@ -28,13 +29,18 @@ $(OBJ_PATH)%.o: $(SRC_PATH)%.cpp | $(OBJ_PATH)
 
 $(LOGS_PATH):
 	@mkdir -p $(LOGS_PATH)
+	@touch $(LOGS_PATH)webserv.log
+
+$(CONFIGS_PATH):
+	@mkdir -p $(CONFIGS_PATH)
+	@touch $(CONFIGS_PATH)default.conf
 
 $(OBJ_PATH):
 	@mkdir -p $(OBJ_PATH)
 
-$(NAME): $(OBJ) $(LOGS_PATH)
+$(NAME): $(OBJ) $(LOGS_PATH) $(CONFIGS_PATH)
 	@$(CC) $(CFLAGS) -o $(NAME) $(OBJ)
-	@printf  "$(EMOJI_PACKAGE)	$(WHITE)$(NAME)				$(YELLOW)compiled$(WHITE)\n"
+	@printf  "\n$(EMOJI_PACKAGE)	$(WHITE)$(NAME)				$(YELLOW)compiled$(WHITE)\n"
 
 all: $(NAME)
 

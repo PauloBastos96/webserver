@@ -2,15 +2,14 @@
 #define LOGGER_H
 
 #include <fstream>
-#include <iostream>
 
 /**
  * @brief Enum for log levels.
  */
-enum LogLevel {
-    INFO, ///< Informational log level
-    WARNING, ///< Warning log level
-    ERROR, ///< Error log level
+enum log_level {
+    info, ///< Informational log level
+    warning, ///< Warning log level
+    error, ///< Error log level
 };
 
 #define RED "\033[0;91m"
@@ -18,19 +17,19 @@ enum LogLevel {
 #define BLUE "\033[0;94m"
 
 /**
- * @class Logger
+ * @class logger
  * @brief This class is used for logging messages with different log levels.
  */
-class Logger {
+class logger {
 public:
-    Logger();
+    logger();
 
-    ~Logger();
+    ~logger();
 
-    void log(const std::string &message, int log_level);
+    static void log(const std::string &message, int log_level);
 
 private:
-    std::ofstream logFile;
+    static std::ofstream log_file_;
 };
 
 #endif
