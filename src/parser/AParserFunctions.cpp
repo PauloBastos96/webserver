@@ -47,7 +47,7 @@ void	AParserFunctions::parseHost(const string line, Server &server)
 void	AParserFunctions::parsePort(const string line, Server &server)
 {
 	int	port = 80;
-	
+
 	if (line.find_first_of(":") != string::npos)
 		port = std::atoi(line.substr(line.find_first_of(":") + 1).c_str());
 	server.setPort(port);

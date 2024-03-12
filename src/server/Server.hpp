@@ -17,29 +17,34 @@
 #include "../location/Location.hpp"
 #include <vector>
 
-using std::vector;
+class Server {
+public:
+    Server();
 
-class Server
-{
-	private:
-		string			_host;
-		int				_port;
-		vector<string>	_serverName;
-		ServerConfig	_config;
-		vector<Location> _locations;
-	public:
-		Server(void);
-		~Server(void);
+    ~Server();
 
-		const int				&getPort(void);
-		const string			&getHost(void);
-		const vector<string>	&getServerName(void);
-		ServerConfig			&getConfig(void);
-		vector<Location>		&getLocations(void);
+    const int &getPort();
 
-		void	setHost(const string &host);
-		void	setPort(const int &port);
-		void	setServerName(const string &server_name);
+    const string &getHost();
+
+    const vector<string> &getServerName();
+
+    ServerConfig &getConfig();
+
+    vector<Location> &getLocations();
+
+    void setHost(const string &host);
+
+    void setPort(const int &port);
+
+    void setServerName(const string &server_name);
+
+private:
+    std::string _host;
+    int _port;
+    vector<string> _serverName;
+    ServerConfig _config;
+    vector<Location> _locations;
 };
 
 #endif

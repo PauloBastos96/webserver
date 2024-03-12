@@ -58,4 +58,3 @@ const bool	&ServerConfig::getAutoIndex(void)
 {
 	return (_autoIndex);
 }
-
