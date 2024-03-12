@@ -1,6 +1,6 @@
-#include <config.h>
 #include <iostream>
-#include <logger.h>
+#include "config.h"
+#include "../logger/logger.h"
 
 Config::Config(const std::string &config_file) {
     file.open(config_file.c_str(), std::ios::in);
