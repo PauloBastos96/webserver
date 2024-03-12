@@ -6,7 +6,7 @@
 /*   By: paulorod <paulorod@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/20 16:11:49 by paulorod          #+#    #+#             */
-/*   Updated: 2024/03/12 15:22:37 by paulorod         ###   ########.fr       */
+/*   Updated: 2024/03/12 17:06:38 by paulorod         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include "../server/Server.hpp"
 #include <sstream>
 #include <cstdlib>
+#include <iostream>
 
 using std::string;
 
@@ -41,7 +42,7 @@ class AConfigParser
 			{
 				if (word != "error_page" && word.find_first_of("/") == string::npos)
 				{
-					if (word.find_first_not_of("0123456789") != string::npos)
+					if (word.find_first_not_of("0123456789") != string::npos && word.find_first_of('=') == string::npos)
 						return (1);
 					obj.getConfig().setErrorPage(std::atoi(word.c_str()), ss.str().substr(ss.str().find_first_of("/")));
 				}

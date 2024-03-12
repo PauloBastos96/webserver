@@ -19,26 +19,29 @@
 AConfigParser::AConfigParser(void){}
 AConfigParser::~AConfigParser(void){}
 
+static string	trim(const string &str)
+{
+	string result = str;
+	size_t start = result.find_first_not_of(" \t");
+	size_t end = result.find_last_not_of(" \t");
+	if (start == string::npos || end == string::npos)
+		return "";
+	return result.substr(start, end - start + 1);
+}
+
 /**	@brief Parse the IP address from the line from the config file and set it to the server object
  *	@param line The line from the config file
  *	@param server The server object
  */
 void	AConfigParser::parseHost(const string line, Server &server)
 {
-	string		host;
-	if (line.find_first_of(".") != string::npos)
+	string		host = "127.0.0.1"; //TODO replace with default value from MACRO
+	if (line.find_first_of("=") != string::npos)
 	{
-		if (line.find_first_of(":") != string::npos)
-			host = line.substr(line.find_first_of(" ") + 1, line.find_first_of(":") - line.find_first_of(" ") - 1);
-		else
-			host = line.substr(line.find_first_of(" ") + 1);
-	}
-	else
-	{
-		if (line.find_first_of(":") != string::npos)
-			host = line.substr(line.find_first_of(" ") + 1, line.find_first_of(":") - line.find_first_of(" ") - 1);
-		else
-			host = line.substr(line.find_first_of(" ") + 1);
+		host = line.substr(line.find_first_of("=") + 1);
+		host = trim(host);
+		if (host.find_first_of(" ") != string::npos)
+			logger::log("Invalid host directive", error);
 	}
 	server.setHost(host);
 }
@@ -51,8 +54,8 @@ void	AConfigParser::parsePort(const string line, Server &server)
 {
 	int	port = 80;
 	
-	if (line.find_first_of(":") != string::npos)
-		port = std::atoi(line.substr(line.find_first_of(":") + 1).c_str());
+	if (line.find_first_of("=") != string::npos)
+		port = std::atoi(line.substr(line.find_first_of("=") + 1).c_str());
 	server.setPort(port);
 }
 
@@ -66,7 +69,7 @@ void	AConfigParser::parseServerName(const string line, Server &server)
 	string word;
 	while (ss >> word)
 	{
-		if (word != "server_name")
+		if (word != "server_name" && word.find_first_of('=') == string::npos)
 			server.setServerName(word);
 	}
 }
@@ -82,7 +85,7 @@ void	AConfigParser::parseIndex(const string line, Server &server)
 	string word;
 	while (ss >> word)
 	{
-		if (word != "index")
+		if (word != "index" && word.find_first_of('=') == string::npos)
 			server.getConfig().setIndex(word);
 	}
 }
@@ -152,21 +155,24 @@ vector<Server>	*AConfigParser::parseConfigFile(const string &path)
 	while (std::getline(file, line) && !file.eof())
 	{
 		line_number++;
-		if (line.find("server") != string::npos && line.end()[-1] == '{')
+		if (line.find("[server]") != string::npos)
 		{
 			Server server;
-			while (std::getline(file, line) && !file.eof() && line.find("}") == string::npos)
+			while (std::getline(file, line) && !file.eof() && line.find("[server]") == string::npos)
 			{
 				line_number++;
-				if (line.find("listen") != string::npos)
-				{
+				if (line.find("host") != string::npos)
 					AConfigParser::parseHost(line, server);
+				if (line.find("port") != string::npos)
 					AConfigParser::parsePort(line, server);
-				}
 				if (line.find("server_name") != string::npos)
 					AConfigParser::parseServerName(line, server);
 				if (line.find("root") != string::npos)
-					server.getConfig().setRoot(line.substr(line.find_first_of(" ") + 1));
+				{
+					string root = line.substr(line.find_first_of('=') + 1);
+					root = trim(root);
+					server.getConfig().setRoot(root);
+				}
 				if (line.find("index") != string::npos)
 					AConfigParser::parseIndex(line, server);
 				if (line.find("error_page") != string::npos)
@@ -175,7 +181,7 @@ vector<Server>	*AConfigParser::parseConfigFile(const string &path)
 						throw ConfigException("Invalid error page directive", line_number);
 				}
 				if (line.find("max_client_body_size") != string::npos)
-					server.getConfig().setMaxClientBodySize(line.substr(line.find_first_of(" ") + 1));
+					server.getConfig().setMaxClientBodySize(line.substr(line.find_first_of('=') + 1));
 				if (line.find("location") != string::npos && line.end()[-1] == '{')
 					AConfigParser::parseLocation(line, server, line_number, file);
 				if (line.find("autoindex") != string::npos)
@@ -183,10 +189,6 @@ vector<Server>	*AConfigParser::parseConfigFile(const string &path)
 					string autoindex = line.substr(line.find_first_of(" ") + 1);
 					server.getConfig().setAutoIndex(autoindex == "off" ? false : true);
 				}
-			}
-			if (line.find("}") == string::npos)
-			{
-				throw ConfigException("Missing closing bracket", line_number);
 			}
 			servers->push_back(server);
 		}
