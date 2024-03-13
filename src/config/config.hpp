@@ -8,28 +8,23 @@
 #include <sstream>
 #include <cstdlib>
 
-class Config {
+class config {
 public:
-    explicit Config(const std::string &config_file);
-
-    ~Config();
-
     static void parse_config_file(const std::string &path, std::vector<server> &servers);
 
     static void display_configs(vector<server> &servers);
 
+    static void host(const std::string& line, server &server);
 
-    static void host(std::string line, server &server);
+    static void port(const std::string& line, server &server);
 
-    static void port(std::string line, server &server);
+    static void server_name(const std::string& line, server &server);
 
-    static void server_name(std::string line, server &server);
-
-    static void index(std::string line, server &server);
+    static void index(const std::string& line, server &server);
 
     static void location(std::string line, server &server, int &line_number, std::ifstream &file);
 
-    static void limit_except(std::string line, Location &location);
+    static void limit_except(const std::string& line, Location &location);
 
     template<typename T>
     static int parseErrorPage(const std::string &line, T &obj) {
@@ -44,8 +39,9 @@ public:
         }
         return (0);
     }
+
 private :
-    std::ofstream file;
+    std::ofstream file_;
 };
 
 #endif

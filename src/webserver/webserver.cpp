@@ -6,7 +6,6 @@
 
 std::vector<server> &WebServer::get_servers() { return servers; }
 
-
 std::ofstream WebServer::log_file_;
 
 WebServer::WebServer() {
@@ -21,7 +20,5 @@ WebServer::~WebServer() {
 }
 
 void WebServer::config_servers(const std::string &path, std::vector<server> &servers) {
-    (void) path;
-    (void) servers;
-    // WebServer::config = Config(path);
-    }
+    config::parse_config_file(path, servers);
+}

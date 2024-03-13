@@ -24,15 +24,10 @@ public:
 
 private:
     static std::ofstream log_file_;
-    // config
-public:
-    // class Config config;
 
-    void config_servers(const std::string &path, std::vector<server> &servers);
-
-    // Parser
+    // Config
 public:
-    class parser;
+    static void config_servers(const std::string &path, std::vector<server> &servers);
 };
 
 #endif
