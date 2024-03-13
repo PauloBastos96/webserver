@@ -1,6 +1,7 @@
 #include "webserver.hpp"
-#include <parser/AParserFunctions.hpp>
+#include <config/config.hpp>
 #include <iostream>
+#include <config.hpp>
 
 
 std::vector<server> &WebServer::get_servers() { return servers; }
@@ -18,3 +19,9 @@ WebServer::WebServer() {
 WebServer::~WebServer() {
     log_file_.close();
 }
+
+void WebServer::config_servers(const std::string &path, std::vector<server> &servers) {
+    (void) path;
+    (void) servers;
+    // WebServer::config = Config(path);
+    }
