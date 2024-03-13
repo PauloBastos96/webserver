@@ -15,36 +15,36 @@
 ServerConfig::ServerConfig(){}
 ServerConfig::~ServerConfig() {}
 
-void	ServerConfig::setRoot(const string &root)
+void	ServerConfig::setRoot(const std::string &root)
 {
 	_root = root;
 }
-void	ServerConfig::setIndex(const string &index)
+void	ServerConfig::setIndex(const std::string &index)
 {
 	_index.push_back(index);
 }
-void	ServerConfig::setErrorPage(const uint &error_code, const string &error_page)
+void	ServerConfig::setErrorPage(const uint &error_code, const std::string &error_page)
 {
-	_errorPage.insert(std::pair<uint, string>(error_code, error_page));
+	_errorPage.insert(std::pair<uint, std::string>(error_code, error_page));
 }
-void	ServerConfig::setMaxClientBodySize(const string &max_client_body_size)
+void	ServerConfig::setMaxClientBodySize(const std::string &max_client_body_size)
 {
 	_maxClientBodySize = max_client_body_size;
 }
 
-const string	&ServerConfig::getRoot(void)
+const std::string	&ServerConfig::getRoot(void)
 {
 	return (_root);
 }
-vector<string>	&ServerConfig::getIndex(void)
+vector<std::string>	&ServerConfig::getIndex(void)
 {
 	return (_index);
 }
-map<uint, string>	&ServerConfig::getErrorPage(void)
+map<uint, std::string>	&ServerConfig::getErrorPage(void)
 {
 	return (_errorPage);
 }
-const string	&ServerConfig::getMaxClientBodySize(void)
+const std::string	&ServerConfig::getMaxClientBodySize(void)
 {
 	return (_maxClientBodySize);
 }
@@ -58,4 +58,3 @@ const bool	&ServerConfig::getAutoIndex(void)
 {
 	return (_autoIndex);
 }
-

@@ -1,44 +1,32 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Location.cpp                                       :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: paulorod <paulorod@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/02/20 15:46:15 by paulorod          #+#    #+#             */
-/*   Updated: 2024/03/12 13:03:45 by paulorod         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "Location.hpp"
 
 Location::Location()
 {
-	_config.setAutoIndex(false);
+	config_.setAutoIndex(false);
 }
 Location::~Location(){}
 
-const string	&Location::getPath(void)
+const std::string	&Location::get_path(void)
 {
-	return (_path);
+	return (path_);
 }
 
-ServerConfig	&Location::getConfig(void)
+ServerConfig	&Location::get_config(void)
 {
-	return (_config);
+	return (config_);
 }
 
-void	Location::setPath(const string &path)
+void	Location::set_path(const std::string &path)
 {
-	_path = path;
+	path_ = path;
 }
 
-vector<string>	&Location::getAllowedMethods(void)
+vector<std::string>	&Location::get_allowed_methods(void)
 {
-	return (_allowedMethods);
+	return (allowed_methods_);
 }
 
-void	Location::setAllowedMethods(const string &method)
+void	Location::set_allowed_methods(const std::string &method)
 {
-	_allowedMethods.push_back(method);
+	allowed_methods_.push_back(method);
 }

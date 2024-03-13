@@ -1,53 +1,47 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "webserv.hpp"
+#include <iostream>
+#include <cstring>
+#include <vector>
+#include "webserver/webserver.hpp"
+#include "config/config.hpp"
+#include "server/Server.hpp"
+#include "config/config.hpp"
+#include "webserver/webserver.hpp"
 
 int main(const int ac, const char **av) {
     (void) av;
     try {
-        logger logger;
+        WebServer webserver;
         if (ac > 2)
-            logger::log("webserv: too many arguments", error);
+            WebServer::log("webserv: too many arguments", error);
         // Parse the configuration file
-        //Config config(ac == 1 ? "configs/default.conf" : av[1]);
+        WebServer::config_servers(ac == 1 ? "configs/default.conf" : av[1], webserver.get_servers());
+        config::display_configs(webserver.get_servers());
         // Setup the server
         // ...
         // while (true) {
-            // Use poll() to handle multiple client connections
-            // ...
+        // Use poll() to handle multiple client connections
+        // ...
 
-            // For each client connection
-            // ...
+        // For each client connection
+        // ...
 
-            // Read the HTTP request
-            // ...
+        // Read the HTTP request
+        // ...
 
-            // Process the request
-            // ...
+        // Process the request
+        // ...
 
-            // Generate the HTTP response
-            // ...
+        // Generate the HTTP response
+        // ...
 
-            // Send the response
-            // ...
+        // Send the response
+        // ...
 
-            // End of each client connection
+        // End of each client connection
         // }
-
-		vector<Server> *servers;
-		if (ac == 2)
-		{
-			servers = AConfigParser::parseConfigFile(av[1]);
-		}
-		else
-		{
-			servers = AConfigParser::parseConfigFile("configs/default.conf");
-		}
-		AConfigParser::debugDisplayServerConfigs(*servers);
-		delete servers;
-    } 
-    catch (std::exception &e) {
-		logger::log(e.what(), error);
+    } catch (...) {
         return 1;
     }
 }

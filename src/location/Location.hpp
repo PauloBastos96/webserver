@@ -1,36 +1,29 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Location.hpp                                       :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: paulorod <paulorod@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/02/20 14:00:17 by paulorod          #+#    #+#             */
-/*   Updated: 2024/03/12 13:00:09 by paulorod         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef LOCATION_HPP
 # define LOCATION_HPP
 
 #include "../server_config/ServerConfig.hpp"
+#include <string>
 
-class Location
-{
-	private:
-		string			_path;
-		ServerConfig	_config;
-		vector<string>	_allowedMethods;
-	public:
-		Location();
-		~Location();
-		
-		const string	&getPath(void);
-		ServerConfig	&getConfig(void);
-		vector<string>	&getAllowedMethods(void);
+class Location {
+private:
+    std::string path_;
+    ServerConfig config_;
+    vector<std::string> allowed_methods_;
 
-		void			setPath(const string &path);
-		void			setAllowedMethods(const string &method);
+public:
+    Location();
+
+    ~Location();
+
+    const std::string &get_path();
+
+    ServerConfig &get_config();
+
+    vector<std::string> &get_allowed_methods();
+
+    void set_path(const std::string &path);
+
+    void set_allowed_methods(const std::string &method);
 };
 
 #endif

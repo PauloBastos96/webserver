@@ -13,38 +13,47 @@
 #ifndef SERVERCONFIG_HPP
 # define SERVERCONFIG_HPP
 
-#include "../config_exception/ConfigException.hpp"
 #include <vector>
 #include <map>
+#include <string>
 
 using std::vector;
 using std::map;
 
 typedef unsigned int uint;
 
-class ServerConfig
-{
-	private:
-		string				_root;
-		vector<string>		_index;
-		map<uint, string>	_errorPage;
-		string				_maxClientBodySize;
-		bool				_autoIndex;
-	public:
-		ServerConfig();
-		~ServerConfig();
+class ServerConfig {
+private:
+    std::string _root;
+    vector<std::string> _index;
+    map<uint, std::string> _errorPage;
+    std::string _maxClientBodySize;
+    bool _autoIndex;
 
-		const string		&getRoot(void);
-		vector<string>		&getIndex(void);
-		map<uint, string>	&getErrorPage(void);
-		const string		&getMaxClientBodySize(void);
-		const bool			&getAutoIndex(void);
+public:
+    ServerConfig();
 
-		void	setRoot(const string &root);
-		void	setIndex(const string &index);
-		void	setErrorPage(const uint &error_code, const string &error_page);
-		void	setMaxClientBodySize(const string &max_client_body_size);
-		void	setAutoIndex(const bool &auto_index);
+    ~ServerConfig();
+
+    const std::string &getRoot(void);
+
+    vector<std::string> &getIndex(void);
+
+    map<uint, std::string> &getErrorPage(void);
+
+    const std::string &getMaxClientBodySize(void);
+
+    const bool &getAutoIndex(void);
+
+    void setRoot(const std::string &root);
+
+    void setIndex(const std::string &index);
+
+    void setErrorPage(const uint &error_code, const std::string &error_page);
+
+    void setMaxClientBodySize(const std::string &max_client_body_size);
+
+    void setAutoIndex(const bool &auto_index);
 };
 
 #endif

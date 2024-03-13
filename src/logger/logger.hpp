@@ -1,8 +1,7 @@
-#ifndef LOGGER_HPP
-#define LOGGER_HPP
+#ifndef WebServer_H
+#define WebServer_H
 
 #include <fstream>
-#include "../webserv.hpp"
 
 /**
  * @brief Enum for log levels.
@@ -13,20 +12,8 @@ enum log_level {
     error, ///< Error log level
 };
 
-/**
- * @class logger
- * @brief This class is used for logging messages with different log levels.
- */
-class logger {
-public:
-    logger();
-
-    ~logger();
-
-    static void log(const std::string &message, int log_level);
-
-private:
-    static std::ofstream log_file_;
-};
+#define RED "\033[0;91m"
+#define YELLOW "\033[1;33m"
+#define BLUE "\033[0;94m"
 
 #endif
