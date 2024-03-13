@@ -4,7 +4,7 @@
 #include <config.hpp>
 
 
-std::vector<server> &WebServer::get_servers() { return servers; }
+std::vector<server> &WebServer::get_servers() { return servers_; }
 
 std::ofstream WebServer::log_file_;
 

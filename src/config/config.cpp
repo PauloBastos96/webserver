@@ -49,7 +49,7 @@ void config::parse_config_file(const std::string &path, vector<server> &servers)
 
 void config::display_configs(vector<server> &servers) {
     for (size_t i = 0; i < servers.size(); i++) {
-        std::cout << BLUE << "Host " << servers[i].get_hort() << ":" << servers[i].get_port() << std::endl;
+        std::cout << BLUE << "Host " << servers[i].get_host() << ":" << servers[i].get_port() << std::endl;
         std::cout << "Server name: ";
         for (size_t j = 0; j < servers[i].get_server_name().size(); j++) {
             std::cout << servers[i].get_server_name()[j] << " ";

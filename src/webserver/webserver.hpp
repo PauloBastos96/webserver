@@ -16,7 +16,7 @@ public:
     std::vector<server> &get_servers();
 
 private:
-    std::vector<server> servers;
+    std::vector<server> servers_;
 
     // Logger
 public:
