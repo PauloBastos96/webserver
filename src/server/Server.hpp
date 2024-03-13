@@ -13,7 +13,7 @@ public:
 
     const int &get_port() const;
 
-    const std::string &get_hort();
+    const std::string &get_host();
 
     const vector<std::string> &get_server_name();
 
