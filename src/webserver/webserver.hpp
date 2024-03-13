@@ -12,9 +12,9 @@ public:
     ~WebServer();
 // Server
 public:
-    std::vector<Server> &getServers();
+    std::vector<server> &get_servers();
 private:
-    std::vector<Server> servers;
+    std::vector<server> servers;
 // Logger
 public:
     static void log(const std::string &message, int log_level);
@@ -22,8 +22,7 @@ private:
     static std::ofstream log_file_;
 // Parser
 public:
-    static void parse_config_file(const std::string &path, std::vector<Server> &servers);
-    static void display_configs(vector<Server> &servers);
+    class parser;
 };
 
 #endif

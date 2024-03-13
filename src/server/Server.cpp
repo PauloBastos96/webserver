@@ -1,63 +1,51 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Server.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: paulorod <paulorod@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/02/20 15:30:04 by paulorod          #+#    #+#             */
-/*   Updated: 2024/03/12 13:14:19 by paulorod         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "Server.hpp"
 
-Server::Server(void)
+server::server()
 {
-	_port = 80;
-	_host = "127.0.0.1";
-	_config.setRoot("/");
-	_config.setMaxClientBodySize("1m");
-	_config.setIndex("index.html");
-	_config.setAutoIndex(false);
+	port_ = 80;
+	host_ = "127.0.0.1";
+	config_.setRoot("/");
+	config_.setMaxClientBodySize("1m");
+	config_.setIndex("index.html");
+	config_.setAutoIndex(false);
 }
 
-Server::~Server(void){}
+server::~server() {};
 
-void	Server::setHost(const string &host)
+void	server::set_host(const std::string &host)
 {
-	_host = host;
+	host_ = host;
 }
-void	Server::setPort(const int &port)
+void	server::set_port(const int &port)
 {
-	_port = port;
+	port_ = port;
 }
-void	Server::setServerName(const string &server_name)
+void	server::set_server_name(const std::string &server_name)
 {
-	_serverName.push_back(server_name);
-}
-
-const int	&Server::getPort(void)
-{
-	return (_port);
+	server_name_.push_back(server_name);
 }
 
-const string	&Server::getHost(void)
+const int	&server::get_port() const
 {
-	return (_host);
+	return (port_);
 }
 
-const vector<string>	&Server::getServerName(void)
+const std::string	&server::get_hort()
 {
-	return (_serverName);
+	return (host_);
 }
 
-ServerConfig	&Server::getConfig(void)
+const vector<std::string>	&server::get_server_name()
 {
-	return (_config);
+	return (server_name_);
 }
 
-vector<Location>	&Server::getLocations(void)
+ServerConfig	&server::get_config()
 {
-	return (_locations);
+	return (config_);
+}
+
+vector<Location>	&server::getlocations()
+{
+	return (locations_);
 }

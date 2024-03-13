@@ -13,40 +13,40 @@ NAME = webserv
 CC = c++
 CFLAGS = -Werror -Wextra -Wall -O3 -std=c++98 $(INC)
 
-SRC_PATH = src/
-OBJ_PATH = obj/
-LOGS_PATH = logs/
-CONFIGS_PATH = configs/
+SRCpath_ = src/
+OBJpath_ = obj/
+LOGSpath_ = logs/
+CONFIGSpath_ = configs/
 
 INC = $(addprefix -I, $(shell find . -type d))
-SRC = $(wildcard $(SRC_PATH)*.cpp $(SRC_PATH)**/*.cpp)
-OBJ = $(SRC:$(SRC_PATH)%.cpp=$(OBJ_PATH)%.o)
+SRC = $(wildcard $(SRCpath_)*.cpp $(SRCpath_)**/*.cpp)
+OBJ = $(SRC:$(SRCpath_)%.cpp=$(OBJpath_)%.o)
 
-$(OBJ_PATH)%.o: $(SRC_PATH)%.cpp | $(OBJ_PATH)
+$(OBJpath_)%.o: $(SRCpath_)%.cpp | $(OBJpath_)
 	 @mkdir -p $(dir $@)
 	 @$(CC) $(CFLAGS) $(INC) -c $< -o $@
 	 @printf "$(EMOJI_HAMMER)	$(BLUE)Compiling $(WHITE)$(NAME)		$(BLUE)%-33s$(WHITE)\r" $(notdir $@)
 
-$(LOGS_PATH):
-	@mkdir -p $(LOGS_PATH)
-	@touch $(LOGS_PATH)webserv.log
+$(LOGSpath_):
+	@mkdir -p $(LOGSpath_)
+	@touch $(LOGSpath_)webserv.log
 
-$(CONFIGS_PATH):
-	@mkdir -p $(CONFIGS_PATH)
-	@touch $(CONFIGS_PATH)default.conf
+$(CONFIGSpath_):
+	@mkdir -p $(CONFIGSpath_)
+	@touch $(CONFIGSpath_)default.conf
 
-$(OBJ_PATH):
-	@mkdir -p $(OBJ_PATH)
+$(OBJpath_):
+	@mkdir -p $(OBJpath_)
 
-$(NAME): $(OBJ) $(LOGS_PATH) $(CONFIGS_PATH)
+$(NAME): $(OBJ) $(LOGSpath_) $(CONFIGSpath_)
 	@$(CC) $(CFLAGS) -o $(NAME) $(OBJ)
 	@printf  "\n$(EMOJI_PACKAGE)	$(WHITE)$(NAME)				$(YELLOW)compiled$(WHITE)\n"
 
 all: $(NAME)
 
 clean:
-	@rm -rf $(OBJ_PATH)
-	@rm -rf $(LOGS_PATH)
+	@rm -rf $(OBJpath_)
+	@rm -rf $(LOGSpath_)
 
 fclean: clean
 	@rm -f $(NAME)

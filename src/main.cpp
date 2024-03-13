@@ -16,9 +16,9 @@ int main(const int ac, const char **av) {
         if (ac > 2)
             WebServer::log("webserv: too many arguments", error);
         // Parse the configuration file
-        webserver.parse_config_file(ac == 1 ? "configs/default.conf" : av[1], webserver.getServers());
-        webserver.display_configs(webserver.getServers());
-        std::cout << webserver.getServers().size();
+        WebServer::parse_config_file(ac == 1 ? "configs/default.conf" : av[1], webserver.get_servers());
+        WebServer::display_configs(webserver.get_servers());
+        std::cout << webserver.get_servers().size();
         // Setup the server
         // ...
         // while (true) {

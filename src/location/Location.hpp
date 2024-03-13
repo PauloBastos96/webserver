@@ -2,27 +2,28 @@
 # define LOCATION_HPP
 
 #include "../server_config/ServerConfig.hpp"
+#include <string>
 
 class Location {
 private:
-    string _path;
-    ServerConfig _config;
-    vector<string> _allowedMethods;
+    std::string path_;
+    ServerConfig config_;
+    vector<std::string> allowed_methods_;
 
 public:
     Location();
 
     ~Location();
 
-    const string &getPath(void);
+    const std::string &get_path();
 
-    ServerConfig &getConfig(void);
+    ServerConfig &get_config();
 
-    vector<string> &getAllowedMethods(void);
+    vector<std::string> &get_allowed_methods();
 
-    void setPath(const string &path);
+    void set_path(const std::string &path);
 
-    void setAllowedMethods(const string &method);
+    void set_allowed_methods(const std::string &method);
 };
 
 #endif

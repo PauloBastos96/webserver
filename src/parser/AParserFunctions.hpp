@@ -1,52 +1,39 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   AParserFunctions.hpp                               :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: paulorod <paulorod@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/02/20 16:11:49 by paulorod          #+#    #+#             */
-/*   Updated: 2024/03/12 13:26:25 by paulorod         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef PARSERFUNCTIONS_HPP
 # define PARSERFUNCTIONS_HPP
 
 #include "../server/Server.hpp"
 #include <sstream>
 #include <cstdlib>
-
-using std::string;
+#include <webserver.hpp>
 
 class AParserFunctions {
 private:
-    AParserFunctions(void);
+    AParserFunctions();
 
-    virtual ~AParserFunctions(void) = 0;
+    virtual ~AParserFunctions() = 0;
 
 public:
-    static void parseHost(const string line, Server &server);
+    static void host(std::string line, server &server);
 
-    static void parsePort(const string line, Server &server);
+    static void port(std::string line, server &server);
 
-    static void parseServerName(const string line, Server &server);
+    static void server_name(std::string line, server &server);
 
-    static void parseIndex(const string line, Server &server);
+    static void index(std::string line, server &server);
 
-    static void parseLocation(string line, Server &server, int &line_number, std::ifstream &file);
+    static void location(std::string line, server &server, int &line_number, std::ifstream &file);
 
-    static void parseLimitExcept(string line, Location &location);
+    static void limit_except(std::string line, Location &location);
 
     template<typename T>
-    static int parseErrorPage(const string line, T &obj) {
+    static int parseErrorPage(const std::string &line, T &obj) {
         std::stringstream ss(line);
-        string word;
+        std::string word;
         while (ss >> word) {
-            if (word != "error_page" && word.find_first_of("/") == string::npos) {
-                if (word.find_first_not_of("0123456789") != string::npos)
+            if (word != "error_page" && word.find_first_of('/') == std::string::npos) {
+                if (word.find_first_not_of("0123456789") != std::string::npos)
                     return (1);
-                obj.getConfig().setErrorPage(std::atoi(word.c_str()), ss.str().substr(ss.str().find_first_of("/")));
+                obj.get_config().setErrorPage(std::atoi(word.c_str()), ss.str().substr(ss.str().find_first_of("/")));
             }
         }
         return (0);
