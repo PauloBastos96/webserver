@@ -1,5 +1,5 @@
 #include <iostream>
-#include "webserver/webserver.hpp"
+#include "webserver.hpp"
 
 /**
  * @brief Logs a message with a specific log level.
@@ -16,19 +16,19 @@ void WebServer::log(const std::string &message, const int log_level) {
     switch (log_level) {
         case info:
             log_message = "[INFO]\t\t" + message;
-            color_message = BLUE + log_message;
+            color_message = BLUE + log_message + RESET;
             break;
         case warning:
             log_message = "[WARNING]\t" + message;
-            color_message = YELLOW + log_message;
+            color_message = YELLOW + log_message + RESET;
             break;
         case error:
             log_message = "[ERROR]\t\t" + message;
-            color_message = RED + log_message;
+            color_message = RED + log_message + RESET;
             break;
         default:
             log_message = "[ERROR]\tInvalid log level passed";
-            color_message = RED + log_message;
+            color_message = RED + log_message + RESET;
             break;
     }
     std::cout << color_message << std::endl;

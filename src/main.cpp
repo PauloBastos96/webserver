@@ -8,7 +8,6 @@
 #include <config.hpp>
 #include <webserver.hpp>
 
-
 int main(const int ac, const char **av) {
     try {
         WebServer webserver;

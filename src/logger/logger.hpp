@@ -15,5 +15,6 @@ enum log_level {
 #define RED "\033[0;91m"
 #define YELLOW "\033[1;33m"
 #define BLUE "\033[0;94m"
+# define RESET "\033[0m"
 
 #endif
