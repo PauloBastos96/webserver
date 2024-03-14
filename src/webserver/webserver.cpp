@@ -1,8 +1,5 @@
 #include "webserver.hpp"
-#include <config/config.hpp>
 #include <iostream>
-#include <config.hpp>
-
 
 std::vector<server> &WebServer::get_servers() { return servers_; }
 
