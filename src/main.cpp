@@ -1,3 +1,4 @@
+#include <cmath>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <iostream>
@@ -17,6 +18,7 @@ int main(const int ac, const char **av) {
         // Parse the configuration file
         WebServer::config_servers(ac == 1 ? "configs/default.conf" : av[1], webserver.get_servers());
         config::display_configs(webserver.get_servers());
+        WebServer::log("test", info);
         // Setup the server
         // ...
         // while (true) {
@@ -40,7 +42,11 @@ int main(const int ac, const char **av) {
 
         // End of each client connection
         // }
-    } catch (...) {
+    } catch (std::runtime_error &e) {
         return 1;
+    }
+    catch (std::exception &e) {
+        std::cout << "[ERROR]\t\t" << e.what() << std::endl;
+        return 2;
     }
 }

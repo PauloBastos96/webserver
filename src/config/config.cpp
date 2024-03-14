@@ -1,3 +1,4 @@
+#include <sstream>
 #include <config.hpp>
 #include <iostream>
 #include <server.hpp>
@@ -35,6 +36,11 @@ void config::set_error_page(const uint &error_code, const std::string &error_pag
 
 void config::set_max_client_body_size(const std::string &max_client_body_size) {
     max_client_body_size_ = max_client_body_size;
+}
+
+void config::server_name(const std::string &line, server &server) {
+    const std::string server_name = line.substr(line.find_first_of(' ') + 1);
+    server.set_server_name(server_name);
 }
 
 const std::string &config::get_root() {
@@ -176,29 +182,23 @@ void config::host(const std::string &line, server &server) {
 /// @param line The line from the config file
 /// @param server The server object
 void config::port(const std::string &line, server &server) {
-    char *end;
-    long int port = 80;
+    int port = 80;
     if (line.find_first_of(':') != std::string::npos) {
-        port = std::strtol(line.substr(line.find_first_of(':') + 1).c_str(), &end, 10);
-        if (end == line.c_str() || *end != '\0' || port < 0 || port > 65535) {
+        std::string port_str = line.substr(line.find_first_of(':') + 1);
+        std::stringstream ss(port_str);
+        ss >> port;
+        if (ss.fail() || port < 0 || port > 65535) {
             WebServer::log("[CONFIG] Invalid port number", warning);
             port = 80;
         }
     } else
         WebServer::log("[CONFIG] Port number not found", warning);
-    server.set_port(static_cast<int>(port));
-}
-
-/// @brief Parse the server name from the line from the config file and set it to the server object
-/// @param line The line from the config file
-/// @param server The server object
-void config::server_name(const std::string &line, server &server) {
-    std::stringstream ss(line);
-    std::string word;
-    while (ss >> word) {
-        if (word != "server_name")
-            server.set_server_name(word);
-    }
+    server.set_port(port);
+    port = server.get_port();
+    std::stringstream ss;
+    ss << port;
+    const std::string port_str = ss.str();
+    WebServer::log("Port: " + port_str, info);
 }
 
 /// @brief Parse the index from the line from the config file and set it to the server object
