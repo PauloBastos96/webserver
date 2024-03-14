@@ -27,8 +27,6 @@ template<typename T>
 static void multi_value(const std::string &line, T &server, const std::string &value) {
 	std::stringstream ss(line);
 	std::string word;
-	if (line.at(line.size() - 1) != ';')
-		WebServer::log(WARM_CFG_SEMICOLON, warning);
 	if (value == "index")
 		server.get_config().get_index().clear();
 	while (ss >> word) {

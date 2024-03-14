@@ -26,6 +26,8 @@ public:
 
     static void limit_except(const std::string &line, Location &location);
 
+    static void check_semicolon(const std::string &line);
+
     // Config
 public:
     config();
