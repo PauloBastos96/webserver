@@ -3,14 +3,13 @@
 #include <iostream>
 #include <cstring>
 #include <vector>
-#include "webserver/webserver.hpp"
-#include "config/config.hpp"
-#include "server/Server.hpp"
-#include "config/config.hpp"
-#include "webserver/webserver.hpp"
+#include <location.hpp>
+#include <server.hpp>
+#include <config.hpp>
+#include <webserver.hpp>
+
 
 int main(const int ac, const char **av) {
-    (void) av;
     try {
         WebServer webserver;
         if (ac > 2)

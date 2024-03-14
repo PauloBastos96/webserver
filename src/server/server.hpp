@@ -1,9 +1,10 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-#include "../server_config/ServerConfig.hpp"
-#include "../location/Location.hpp"
 #include <vector>
+#include "config.hpp"
+
+class Location;
 
 class server {
 public:
@@ -15,11 +16,11 @@ public:
 
     const std::string &get_hort();
 
-    const vector<std::string> &get_server_name();
+    const std::vector<std::string> &get_server_name();
 
-    ServerConfig &get_config();
+    config &get_config();
 
-    vector<Location> &getlocations();
+    std::vector<Location> &get_locations();
 
     void set_host(const std::string &host);
 
@@ -30,9 +31,9 @@ public:
 private:
     std::string host_;
     int port_;
-    vector<std::string> server_name_;
-    ServerConfig config_;
-    vector<Location> locations_;
+    std::vector<std::string> server_name_;
+    config config_;
+    std::vector<Location> locations_;
 };
 
 #endif

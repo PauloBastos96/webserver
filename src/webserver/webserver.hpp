@@ -1,7 +1,7 @@
 #ifndef WEBSERVER_HPP
-#define WEBSERVER_HPP
+# define WEBSERVER_HPP
 
-#include "../server/Server.hpp"
+#include <server.hpp>
 #include "logger.hpp"
 #include <vector>
 
