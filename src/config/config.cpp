@@ -69,7 +69,7 @@ void config::parse_config_file(const std::string &path, std::vector<server> &ser
     int line_number = 0;
     while (std::getline(file, line) && !file.eof()) {
         line_number++;
-        if (line.size() >= 2 && line.find("server") != std::string::npos && line.at(line.size() - 2) == '{') {
+        if (line.size() >= 2 && line.find("server") != std::string::npos && line.at(line.size() - 1) == '{') {
             server server;
             while (std::getline(file, line) && !file.eof() && line.find('}') == std::string::npos) {
                 line_number++;
@@ -89,7 +89,7 @@ void config::parse_config_file(const std::string &path, std::vector<server> &ser
                 }
                 if (line.find("max_client_body_size") != std::string::npos)
                     server.get_config().set_max_client_body_size(line.substr(line.find_first_of(' ') + 1));
-                if (line.find("location") != std::string::npos && line.at(line.size() - 2) == '{')
+                if (line.find("location") != std::string::npos && line.at(line.size() - 1) == '{')
                     location(line, server, line_number, file);
                 if (line.find("autoindex") != std::string::npos) {
                     std::string autoindex = line.substr(line.find_first_of(' ') + 1);
@@ -108,7 +108,7 @@ void config::parse_config_file(const std::string &path, std::vector<server> &ser
 
 void config::display_configs(std::vector<server> &servers) {
     for (size_t i = 0; i < servers.size(); i++) {
-        std::cout << BLUE << "Host " << servers[i].get_host() << ":" << servers[i].get_port() << std::endl;
+        std::cout << BLUE << "Host " << servers[i].get_host() << ":" << servers[i].get_port() << RESET << std::endl;
         std::cout << "Server name: ";
         for (size_t j = 0; j < servers[i].get_server_name().size(); j++) {
             std::cout << servers[i].get_server_name()[j] << " ";
@@ -180,12 +180,12 @@ void config::port(const std::string &line, server &server) {
     long int port = 80;
     if (line.find_first_of(':') != std::string::npos) {
         port = std::strtol(line.substr(line.find_first_of(':') + 1).c_str(), &end, 10);
-        if (end == line.c_str() || *end != '\0' || port < 0 || port > 65535) {
+        if (end == line.c_str() || *end != ';' || port < 0 || port > 65535) {
             WebServer::log("[CONFIG] Invalid port number", warning);
             port = 80;
         }
     } else
-        WebServer::log("[CONFIG] Port number not found", warning);
+        WebServer::log("[CONFIG] Port number not found, defaulting to 80", warning);
     server.set_port(static_cast<int>(port));
 }
 

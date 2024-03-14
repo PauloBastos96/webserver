@@ -16,6 +16,6 @@ WebServer::~WebServer() {
     log_file_.close();
 }
 
-void WebServer::config_servers(const std::string &path, std::vector<server> &servers) {
-    config::parse_config_file(path, servers);
+void WebServer::config_servers(const std::string &path) {
+    config::parse_config_file(path, servers_);
 }
