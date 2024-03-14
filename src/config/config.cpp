@@ -1,8 +1,8 @@
-#include <config.hpp>
+#include "config.hpp"
+#include "config.tpp"
 #include <iostream>
-#include <server.hpp>
-#include <webserver.hpp>
 #include <location.hpp>
+#include <algorithm>
 
 config::config() {
 }
@@ -61,28 +61,109 @@ const bool &config::get_auto_index() const {
     return (auto_index_);
 }
 
+/// @brief Parse the IP address from the line from the config file and set it to the server object
+/// @param line The line from the config file
+/// @param server The server object
+void config::host(const std::string &line, server &server) {
+    std::string host;
+    if (line.at(line.size() - 1) != ';')
+        WebServer::log(WARM_CFG_SEMICOLON, warning);
+    if (line.find_first_of(':') != std::string::npos)
+        host = line.substr(line.find_first_of(' ') + 1, line.find_first_of(':') - line.find_first_of(' ') - 1);
+    else
+        host = line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1);
+    server.set_host(host);
+}
+
+/// @brief Parse the port from the line from the config file and set it to the server object
+/// @param line The line from the config file
+/// @param server The server object
+void config::port(const std::string &line, server &server) {
+    int port = 80;
+    if (line.find_first_of(':') != std::string::npos) {
+        std::string port_str = line.substr(line.find_first_of(':') + 1);
+        std::stringstream ss(port_str);
+        ss >> port;
+        if (ss.fail() || port < 0 || port > 65535) {
+            WebServer::log(WARN_CFG_PORT, warning);
+            port = 80;
+        }
+    } else
+        WebServer::log(INFO_CFG_NOPORT, info);
+    server.set_port(port);
+}
+
+/// @brief Parse location block from the config file and add it to the server object
+/// @param line The line from the config file
+/// @param server The server object
+/// @param line_number The starting line number
+/// @param file The config file stream
+void config::location(std::string line, server &server, std::ifstream &file) {
+    Location location;
+    location.set_path(line.substr(line.find_first_of(' ') + 1, line.find_last_of(' ') - line.find_first_of(' ') - 1));
+    while (std::getline(file, line) && !file.eof() && line.find('}') == std::string::npos) {
+        if (line.find("root") != std::string::npos)
+            location.get_config().set_root(line.substr(line.find_first_of(' ') + 1));
+        if (line.find("index") != std::string::npos)
+            location.get_config().set_index(line.substr(line.find_first_of(' ') + 1));
+        if (line.find("error_page") != std::string::npos)
+            if (parse_error_page(line, location))
+                WebServer::log("[CONFIG] Invalid error page directive", error);
+        if (line.find("max_client_body_size") != std::string::npos)
+            location.get_config().set_max_client_body_size(line.substr(line.find_first_of(' ') + 1));
+        if (line.find("location") != std::string::npos && line.at(line.size() - 2) == '{')
+            WebServer::log("[CONFIG] Missing closing bracket", error);
+        if (line.find("limit_except") != std::string::npos)
+            limit_except(line, location);
+        if (line.find("autoindex") != std::string::npos) {
+            std::string autoindex = line.substr(line.find_first_of(' ') + 1);
+            location.get_config().set_auto_index(autoindex != "off");
+        }
+    }
+    server.get_locations().push_back(location);
+}
+
+/// @brief Parse the limit_except block from the config file and add it to the location object
+/// @param line The line from the config file
+/// @param location The location object
+void config::limit_except(const std::string &line, Location &location) {
+    std::stringstream ss(line);
+    std::string word;
+    while (ss >> word) {
+        if (word != "limit_except" && word.find_first_of('{') == std::string::npos)
+            location.set_allowed_methods(word);
+    }
+}
+
+/// @brief Parse the config file and create server objects
+/// @param path The path to the config file
+/// @param servers The vector of server objects
 void config::parse_config_file(const std::string &path, std::vector<server> &servers) {
     std::ifstream file(path.c_str());
     if (!file.is_open())
-        WebServer::log("[CONFIG] Could not open file " + path, error);
+        WebServer::log(ERR_CANT_OPEN_FILE + path, error);
     std::string line;
-    int line_number = 0;
     while (std::getline(file, line) && !file.eof()) {
-        line_number++;
         if (line.size() >= 2 && line.find("server") != std::string::npos && line.at(line.size() - 1) == '{') {
             server server;
             while (std::getline(file, line) && !file.eof() && line.find('}') == std::string::npos) {
-                line_number++;
                 if (line.find("listen") != std::string::npos) {
+                    if (std::count(line.begin(), line.end(), ':') > 1)
+                        WebServer::log(ERR_CFG_LISTEN, error);
                     host(line, server);
                     port(line, server);
                 }
                 if (line.find("server_name") != std::string::npos)
-                    server_name(line, server);
+                    multi_value(line, server, std::string("server_name"));
                 if (line.find("root") != std::string::npos)
-                    server.get_config().set_root(line.substr(line.find_first_of(' ') + 1));
+                {
+                    if (line.at(line.size() - 1) != ';')
+                        WebServer::log(WARM_CFG_SEMICOLON, warning);
+                    if (line.find_first_of(' ') != std::string::npos)
+                        server.get_config().set_root(line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1));
+                }
                 if (line.find("index") != std::string::npos)
-                    index(line, server);
+                    multi_value(line, server, "index");
                 if (line.find("error_page") != std::string::npos) {
                     if (parse_error_page(line, server))
                         WebServer::log("[CONFIG] Invalid error page directive", error);
@@ -90,14 +171,14 @@ void config::parse_config_file(const std::string &path, std::vector<server> &ser
                 if (line.find("max_client_body_size") != std::string::npos)
                     server.get_config().set_max_client_body_size(line.substr(line.find_first_of(' ') + 1));
                 if (line.find("location") != std::string::npos && line.at(line.size() - 1) == '{')
-                    location(line, server, line_number, file);
+                    location(line, server, file);
                 if (line.find("autoindex") != std::string::npos) {
                     std::string autoindex = line.substr(line.find_first_of(' ') + 1);
                     server.get_config().set_auto_index(autoindex != "off");
                 }
             }
             if (line.find('}') == std::string::npos) {
-                WebServer::log("[CONFIG] Missing closing bracket", error);
+                WebServer::log(ERR_CFG_MISSING_BRACKET, error);
             }
             WebServer::log("[CONFIG] Server configuration parsed", info);
             servers.push_back(server);
@@ -157,102 +238,5 @@ void config::display_configs(std::vector<server> &servers) {
                     std::endl;
             std::cout << std::endl;
         }
-    }
-}
-
-/// @brief Parse the IP address from the line from the config file and set it to the server object
-/// @param line The line from the config file
-/// @param server The server object
-void config::host(const std::string &line, server &server) {
-    std::string host;
-    if (line.find_first_of(':') != std::string::npos)
-        host = line.substr(line.find_first_of(' ') + 1, line.find_first_of(':') - line.find_first_of(' ') - 1);
-    else
-        host = line.substr(line.find_first_of(' ') + 1);
-    server.set_host(host);
-}
-
-/// @brief Parse the port from the line from the config file and set it to the server object
-/// @param line The line from the config file
-/// @param server The server object
-void config::port(const std::string &line, server &server) {
-    char *end;
-    long int port = 80;
-    if (line.find_first_of(':') != std::string::npos) {
-        port = std::strtol(line.substr(line.find_first_of(':') + 1).c_str(), &end, 10);
-        if (end == line.c_str() || *end != ';' || port < 0 || port > 65535) {
-            WebServer::log("[CONFIG] Invalid port number", warning);
-            port = 80;
-        }
-    } else
-        WebServer::log("[CONFIG] Port number not found, defaulting to 80", warning);
-    server.set_port(static_cast<int>(port));
-}
-
-/// @brief Parse the server name from the line from the config file and set it to the server object
-/// @param line The line from the config file
-/// @param server The server object
-void config::server_name(const std::string &line, server &server) {
-    std::stringstream ss(line);
-    std::string word;
-    while (ss >> word) {
-        if (word != "server_name")
-            server.set_server_name(word);
-    }
-}
-
-/// @brief Parse the index from the line from the config file and set it to the server object
-/// @param line The line from the config file
-/// @param server The server object
-void config::index(const std::string &line, server &server) {
-    server.get_config().get_index().clear();
-    std::stringstream ss(line);
-    std::string word;
-    while (ss >> word) {
-        if (word != "index")
-            server.get_config().set_index(word);
-    }
-}
-
-/// @brief Parse location block from the config file and add it to the server object
-/// @param line The line from the config file
-/// @param server The server object
-/// @param line_number The starting line number
-/// @param file The config file stream
-void config::location(std::string line, server &server, int &line_number, std::ifstream &file) {
-    Location location;
-    location.set_path(line.substr(line.find_first_of(' ') + 1, line.find_last_of(' ') - line.find_first_of(' ') - 1));
-    while (std::getline(file, line) && !file.eof() && line.find('}') == std::string::npos) {
-        line_number++;
-        if (line.find("root") != std::string::npos)
-            location.get_config().set_root(line.substr(line.find_first_of(' ') + 1));
-        if (line.find("index") != std::string::npos)
-            location.get_config().set_index(line.substr(line.find_first_of(' ') + 1));
-        if (line.find("error_page") != std::string::npos)
-            if (parse_error_page(line, location))
-                WebServer::log("[CONFIG] Invalid error page directive", error);
-        if (line.find("max_client_body_size") != std::string::npos)
-            location.get_config().set_max_client_body_size(line.substr(line.find_first_of(' ') + 1));
-        if (line.find("location") != std::string::npos && line.at(line.size() - 2) == '{')
-            WebServer::log("[CONFIG] Missing closing bracket", error);
-        if (line.find("limit_except") != std::string::npos)
-            limit_except(line, location);
-        if (line.find("autoindex") != std::string::npos) {
-            std::string autoindex = line.substr(line.find_first_of(' ') + 1);
-            location.get_config().set_auto_index(autoindex != "off");
-        }
-    }
-    server.get_locations().push_back(location);
-}
-
-/// @brief Parse the limit_except block from the config file and add it to the location object
-/// @param line The line from the config file
-/// @param location The location object
-void config::limit_except(const std::string &line, Location &location) {
-    std::stringstream ss(line);
-    std::string word;
-    while (ss >> word) {
-        if (word != "limit_except" && word.find_first_of('{') == std::string::npos)
-            location.set_allowed_methods(word);
     }
 }
