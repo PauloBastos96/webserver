@@ -16,7 +16,7 @@ public:
     std::vector<server> &get_servers();
 
 private:
-    std::vector<server> servers;
+    std::vector<server> servers_;
 
     // Logger
 public:
@@ -27,7 +27,7 @@ private:
 
     // Config
 public:
-    static void config_servers(const std::string &path, std::vector<server> &servers);
+    void config_servers(const std::string &path);
 };
 
 #endif

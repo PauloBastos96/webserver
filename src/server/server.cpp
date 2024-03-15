@@ -34,7 +34,7 @@ const int &server::get_port() const {
     return (port_);
 }
 
-const std::string &server::get_hort() {
+const std::string &server::get_host() {
     return (host_);
 }
 

@@ -1,7 +1,7 @@
 #include "webserver.hpp"
 #include <iostream>
 
-std::vector<server> &WebServer::get_servers() { return servers; }
+std::vector<server> &WebServer::get_servers() { return servers_; }
 
 std::ofstream WebServer::log_file_;
 
@@ -16,6 +16,6 @@ WebServer::~WebServer() {
     log_file_.close();
 }
 
-void WebServer::config_servers(const std::string &path, std::vector<server> &servers) {
-    config::parse_config_file(path, servers);
+void WebServer::config_servers(const std::string &path) {
+    config::parse_config_file(path, servers_);
 }
