@@ -39,7 +39,10 @@ int main(const int ac, const char **av) {
 
 		// End of each client connection
 		// }
-	} catch (...) {
+	} catch (const std::runtime_error &e) {
+		return 1;
+	} catch (const std::exception &e) {
+		std::cerr << RED << "[FATAL]:	" << e.what() << RESET << std::endl;
 		return 1;
 	}
 }

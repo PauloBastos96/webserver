@@ -4,18 +4,27 @@
 #include "webserver.hpp"
 #include "logger.hpp"
 
+/// @brief Parse error pages from the configuration file
+/// @tparam T Supports server and location objects
+/// @param line The line to parse
+/// @param obj The server or location object
 template<typename T>
-static int parse_error_page(const std::string &line, T &obj) {
+static void parse_error_page(const std::string &line, T &obj) {
 	std::stringstream ss(line);
 	std::string word;
+	std::string errorPage;
+	int	errorCode;
+	if (ss.str().find_first_of('/') == std::string::npos)
+		WebServer::log(ERR_CFG_INVALID_ERROR_PAGE, error);
 	while (ss >> word) {
 		if (word != "error_page" && word.find_first_of('/') == std::string::npos) {
 			if (word.find_first_not_of("0123456789") != std::string::npos)
-				return (1);
-			obj.get_config().set_error_page(std::atoi(word.c_str()), ss.str().substr(ss.str().find_first_of("/")));
+				WebServer::log(ERR_CFG_INVALID_ERROR_PAGE, error);
+			errorCode = std::atoi(word.c_str());
+			errorPage = ss.str().substr(ss.str().find_first_of("/"), ss.str().find_first_of(';') - ss.str().find_first_of('/'));
+			obj.get_config().set_error_page(errorCode, errorPage);
 		}
 	}
-	return (0);
 }
 
 /// @brief Parse line with multiple values

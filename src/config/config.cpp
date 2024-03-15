@@ -113,12 +113,11 @@ void config::location(std::string line, server &server, std::ifstream &file) {
         if (line.find("index") != std::string::npos && line.find("autoindex") == std::string::npos)
             location.get_config().set_index(line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1));
         if (line.find("error_page") != std::string::npos)
-            if (parse_error_page(line, location))
-                WebServer::log("[CONFIG] Invalid error page directive", error);
+            parse_error_page(line, location);
         if (line.find("max_client_body_size") != std::string::npos)
             location.get_config().set_max_client_body_size(line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1));
         if (line.find("location") != std::string::npos && line.at(line.size() - 1) == '{')
-            WebServer::log("[CONFIG] Missing closing bracket", error);
+            WebServer::log(ERR_CFG_MISSING_BRACKET, error);
         if (line.find("limit_except") != std::string::npos)
             limit_except(line, location);
         if (line.find("autoindex") != std::string::npos) {
@@ -178,10 +177,8 @@ void config::parse_config_file(const std::string &path, std::vector<server> &ser
                 }
                 if (line.find("index") != std::string::npos && line.find("autoindex") == std::string::npos)
                     multi_value(line, server, "index");
-                if (line.find("error_page") != std::string::npos) {
-                    if (parse_error_page(line, server))
-                        WebServer::log("[CONFIG] Invalid error page directive", error);
-                }
+                if (line.find("error_page") != std::string::npos)
+                    parse_error_page(line, server);
                 if (line.find("max_client_body_size") != std::string::npos)
                     server.get_config().set_max_client_body_size(line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1));
                 if (line.find("location") != std::string::npos){
@@ -198,7 +195,6 @@ void config::parse_config_file(const std::string &path, std::vector<server> &ser
             if (line.find('}') == std::string::npos) {
                 WebServer::log(ERR_CFG_MISSING_BRACKET, error);
             }
-            WebServer::log("[CONFIG] Server configuration parsed", info);
             servers.push_back(server);
         }
     }

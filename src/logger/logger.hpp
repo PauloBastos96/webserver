@@ -27,5 +27,6 @@ enum log_level {
 # define ERR_CFG_LISTEN "[CONFIG] Invalid listen directive"
 # define ERR_CFG_MISSING_BRACKET "[CONFIG] Missing closing bracket"
 # define ERR_CANT_OPEN_FILE "[CONFIG] Could not open file "
+# define ERR_CFG_INVALID_ERROR_PAGE "[CONFIG] Invalid error page directive" 
 
 #endif
