@@ -191,6 +191,8 @@ void config::parse_config_file(const std::string &path, std::vector<server> &ser
                     std::string autoindex = line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1);
                     server.get_config().set_auto_index(autoindex != "off");
                 }
+                if (line.find("server") != std::string::npos && line.at(line.size() - 1) == '{')
+                    WebServer::log(ERR_CFG_MISSING_BRACKET, error);
             }
             if (line.find('}') == std::string::npos) {
                 WebServer::log(ERR_CFG_MISSING_BRACKET, error);
