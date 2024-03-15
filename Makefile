@@ -11,7 +11,7 @@ EMOJI_TRASH = \360\237\227\221\357\270\217
 NAME = webserv
 
 CC = c++
-CFLAGS = -Werror -Wextra -Wall -O3 -std=c++98 -g $(INC)
+CFLAGS = -Werror -Wextra -Wall -Wno-unknown-pragmas -O3 -std=c++98 -g $(INC)
 
 SRC_PATH = src/
 OBJ_PATH = obj/
