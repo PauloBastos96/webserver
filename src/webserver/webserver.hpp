@@ -10,13 +10,13 @@ public:
     WebServer();
 
     ~WebServer();
-
+    
     // Servers
 public:
-    std::vector<server> &get_servers();
+    std::vector<Server> &get_servers();
 
 private:
-    std::vector<server> servers_;
+    std::vector<Server> servers_;
 
     // Logger
 public:

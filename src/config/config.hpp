@@ -8,21 +8,21 @@
 #include <cstdlib>
 #include <map>
 
-class server;
+class Server;
 class Location;
 
 class config {
     // Parse config file
 public:
-    static void parse_config_file(const std::string &path, std::vector<server> &servers);
+    static void parse_config_file(const std::string &path, std::vector<Server> &servers);
 
-    static void display_configs(std::vector<server> &servers);
+    static void display_configs(std::vector<Server> &servers);
 
-    static void host(const std::string &line, server &server);
+    static void host(const std::string &line, Server &server);
 
-    static void port(const std::string &line, server &server);
+    static void port(const std::string &line, Server &server);
 
-    static void location(std::string line, server &server, std::ifstream &file);
+    static void location(std::string line, Server &server, std::ifstream &file);
 
     static void limit_except(const std::string &line, Location &location);
 

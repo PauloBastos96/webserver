@@ -68,7 +68,7 @@ const bool &config::get_auto_index() const {
 /// @brief Parse the IP address from the line from the config file and set it to the server object
 /// @param line The line from the config file
 /// @param server The server object
-void config::host(const std::string &line, server &server) {
+void config::host(const std::string &line, Server &server) {
     std::string host;
     if (line.at(line.size() - 1) != ';')
         WebServer::log(WARM_CFG_SEMICOLON, warning);
@@ -82,7 +82,7 @@ void config::host(const std::string &line, server &server) {
 /// @brief Parse the port from the line from the config file and set it to the server object
 /// @param line The line from the config file
 /// @param server The server object
-void config::port(const std::string &line, server &server) {
+void config::port(const std::string &line, Server &server) {
     int port = 80;
     if (line.at(line.size() - 1) != ';')
         WebServer::log(WARM_CFG_SEMICOLON, warning);
@@ -104,7 +104,7 @@ void config::port(const std::string &line, server &server) {
 /// @param server The server object
 /// @param line_number The starting line number
 /// @param file The config file stream
-void config::location(std::string line, server &server, std::ifstream &file) {
+void config::location(std::string line, Server &server, std::ifstream &file) {
     Location location;
     location.set_path(line.substr(line.find_first_of(' ') + 1, line.find_last_of(' ') - line.find_first_of(' ') - 1));
     while (std::getline(file, line) && !file.eof() && line.find('}') == std::string::npos) {
@@ -152,14 +152,14 @@ void config::check_semicolon(const std::string &line) {
 /// @brief Parse the config file and create server objects
 /// @param path The path to the config file
 /// @param servers The vector of server objects
-void config::parse_config_file(const std::string &path, std::vector<server> &servers) {
+void config::parse_config_file(const std::string &path, std::vector<Server> &servers) {
     std::ifstream file(path.c_str());
     if (!file.is_open())
         WebServer::log(ERR_CANT_OPEN_FILE + path, error);
     std::string line;
     while (std::getline(file, line) && !file.eof()) {
         if (line.size() >= 2 && line.find("server") != std::string::npos && line.at(line.size() - 1) == '{') {
-            server server;
+            Server server;
             while (std::getline(file, line) && !file.eof() && line.find('}') == std::string::npos) {
                 config::check_semicolon(line);
                 if (line.find("listen") != std::string::npos) {
@@ -203,7 +203,7 @@ void config::parse_config_file(const std::string &path, std::vector<server> &ser
     file.close();
 }
 
-void config::display_configs(std::vector<server> &servers) {
+void config::display_configs(std::vector<Server> &servers) {
     for (size_t i = 0; i < servers.size(); i++) {
         std::cout << BLUE << "Host " << servers[i].get_host() << ":" << servers[i].get_port() << RESET << std::endl;
         std::cout << "Server name: ";
