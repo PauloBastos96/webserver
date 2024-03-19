@@ -25,8 +25,7 @@ int main(const int ac, const char **av) {
 		//config::display_configs(webserver.get_servers());
 		// Setup the servers
 
-		while (true)
-			runServers(webserver);
+		runServers(webserver);
 
 		// ...
 		// while (true) {

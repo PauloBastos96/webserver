@@ -2,6 +2,7 @@
 # define SERVER_HPP
 
 #include <vector>
+#include <poll.h>
 #include "config.hpp"
 
 class Location;
@@ -30,11 +31,14 @@ public:
 
     void start(void);
 
-    void stop(void);
+    void stop(bool withError = false);
 
 private:
     std::vector<std::string> server_name_;
     std::vector<Location> locations_;
+    struct addrinfo *get_addressinfo() const;
+    void setup_socket(struct addrinfo *addrinfo);
+    void run(pollfd *fds);
     std::string host_;
     config config_;
     int socket_fd_;

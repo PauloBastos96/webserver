@@ -22,6 +22,7 @@ enum log_level {
 //Error messages
 
 # define INFO_CFG_NOPORT "[CONFIG] No port number specified, defaulting to 80"
+# define INFO_SVR_START "[SERVER] Server started"
 
 # define WARN_CFG_PORT "[CONFIG] Invalid port number, defaulting to 80"
 # define WARM_CFG_SEMICOLON "[CONFIG] Missing semicolon"
@@ -32,5 +33,6 @@ enum log_level {
 # define ERR_CFG_INVALID_ERROR_PAGE "[CONFIG] Invalid error page directive"
 # define ERR_SOCKET "Failed to create socket for server: "
 # define ERR_BIND "Failed to bind socket for server: "
+# define ERR_LISTEN "Failed to listen on socket for server: "
 
 #endif
