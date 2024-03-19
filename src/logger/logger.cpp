@@ -14,6 +14,10 @@ void WebServer::log(const std::string &message, const int log_level) {
     std::string log_message;
     std::string color_message;
     switch (log_level) {
+        case debug:
+            log_message = "[DEBUG]\t\t" + message;
+            color_message = PURPLE + log_message + RESET;
+            break;
         case info:
             log_message = "[INFO]\t\t" + message;
             color_message = BLUE + log_message + RESET;

@@ -8,6 +8,13 @@
 #include <server.hpp>
 #include <config.hpp>
 #include <webserver.hpp>
+#include <signal.h>
+
+//TESTING
+void	runServers(WebServer &webserver)
+{
+	webserver.get_servers().at(0).start();
+}
 
 int main(const int ac, const char **av) {
 	try {
@@ -16,8 +23,11 @@ int main(const int ac, const char **av) {
 			WebServer::log("webserv: too many arguments", error);
 		// Parse the configuration file
 		webserver.config_servers(ac == 1 ? "configs/default.conf" : av[1]);
-		config::display_configs(webserver.get_servers());
-		// Setup the server
+		//config::display_configs(webserver.get_servers());
+		// Setup the servers
+
+		runServers(webserver);
+
 		// ...
 		// while (true) {
 		// Use poll() to handle multiple client connections
@@ -41,6 +51,8 @@ int main(const int ac, const char **av) {
 		// End of each client connection
 		// }
 	} catch (const std::runtime_error &e) {
+		if (!strstr(e.what(), "[ERROR]"))
+			std::cerr << RED << "[FATAL]:	" << e.what() << RESET << std::endl;
 		return 1;
 	} catch (const std::exception &e) {
 		std::cerr << RED << "[FATAL]:	" << e.what() << RESET << std::endl;

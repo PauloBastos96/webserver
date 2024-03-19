@@ -1,7 +1,7 @@
 #include "webserver.hpp"
 #include <iostream>
 
-std::vector<server> &WebServer::get_servers() { return servers_; }
+std::vector<Server> &WebServer::get_servers() { return servers_; }
 
 std::ofstream WebServer::log_file_;
 
