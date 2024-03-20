@@ -12,7 +12,7 @@ public:
 
     const std::string &get_path();
 
-    config &get_config();
+    Config &get_config();
 
     std::vector<std::string> &get_allowed_methods();
 
@@ -22,7 +22,7 @@ public:
 
 private:
     std::string path_;
-    config config_;
+    Config config_;
     std::vector<std::string> allowed_methods_;
 };
 

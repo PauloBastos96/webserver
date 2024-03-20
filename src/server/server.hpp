@@ -18,7 +18,7 @@ public:
 
     const std::vector<std::string> &get_server_name();
 
-    config &get_config();
+    Config &get_config();
 
     std::vector<Location> &get_locations();
 
@@ -32,7 +32,7 @@ private:
     std::string host_;
     int port_;
     std::vector<std::string> server_name_;
-    config config_;
+    Config config_;
     std::vector<Location> locations_;
 };
 

@@ -11,8 +11,9 @@
 class server;
 class Location;
 
-class config {
-    // Parse config file
+class Config {
+#pragma region File Parser
+
 public:
     static void parse_config_file(const std::string &path, std::vector<server> &servers);
 
@@ -27,16 +28,22 @@ public:
     static void limit_except(const std::string &line, Location &location);
 
     static void check_semicolon(const std::string &line);
+#pragma endregion
 
-    // Config
+#pragma region Constructors & Destructors
+
 public:
-    config();
+    Config();
 
-    ~config();
+    ~Config();
 
-    config(const config &other);
+    Config(const Config &other);
 
-    config &operator=(const config &other);
+    Config &operator=(const Config &other);
+
+#pragma endregion
+
+#pragma region Getters
 
     const std::string &get_root();
 
@@ -48,6 +55,10 @@ public:
 
     const bool &get_auto_index() const;
 
+#pragma endregion
+
+#pragma region Setters
+
     void set_root(const std::string &root);
 
     void set_index(const std::string &index);
@@ -57,6 +68,8 @@ public:
     void set_max_client_body_size(const std::string &max_client_body_size);
 
     void set_auto_index(const bool &autoindex);
+
+#pragma endregion
 
 private:
     std::string root_;

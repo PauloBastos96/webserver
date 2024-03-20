@@ -1,4 +1,4 @@
-#include <location.hpp>
+#include "location/location.hpp"
 
 Location::Location() {
     config_.set_auto_index(false);
@@ -11,7 +11,7 @@ const std::string &Location::get_path() {
     return (path_);
 }
 
-config &Location::get_config() {
+Config &Location::get_config() {
     return (config_);
 }
 

@@ -1,6 +1,6 @@
 #include <vector>
-#include <server.hpp>
-#include <location.hpp>
+#include <server/server.hpp>
+#include "location/location.hpp"
 
 server::server() {
     port_ = 80;
@@ -26,7 +26,7 @@ void server::set_server_name(const std::string &server_name) {
     server_name_.push_back(server_name);
 }
 
-void config::set_root(const std::string &root) {
+void Config::set_root(const std::string &root) {
     root_ = root;
 }
 
@@ -42,7 +42,7 @@ const std::vector<std::string> &server::get_server_name() {
     return (server_name_);
 }
 
-config &server::get_config() {
+Config &server::get_config() {
     return (config_);
 }
 

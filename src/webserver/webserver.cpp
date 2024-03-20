@@ -17,5 +17,5 @@ WebServer::~WebServer() {
 }
 
 void WebServer::config_servers(const std::string &path) {
-    config::parse_config_file(path, servers_);
+    Config::parse_config_file(path, servers_);
 }
