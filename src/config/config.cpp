@@ -28,6 +28,11 @@ Config &Config::operator=(const Config &other) {
 #pragma endregion
 
 #pragma region Setters
+
+void Config::set_root(const std::string &root) {
+    root_ = root;
+}
+
 void Config::set_index(const std::string &index) {
     index_.push_back(index);
 }
