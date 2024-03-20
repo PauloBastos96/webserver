@@ -1,20 +1,19 @@
 #include "config.hpp"
 #include "config.tpp"
-#include "location/location.hpp"
-#include "webserver/webserver.hpp"
 #include <iostream>
+#include <location.hpp>
 #include <algorithm>
 
-#pragma region Constructors & Destructors
-Config::Config() {}
+#pragma region Constructors
+config::config() {}
 
-Config::~Config() {}
+config::~config() {}
 
-Config::Config(const Config &other) {
+config::config(const config &other) {
     *this = other;
 }
 
-Config &Config::operator=(const Config &other) {
+config &config::operator=(const config &other) {
     if (this == &other)
         return (*this);
     root_ = other.root_;
@@ -27,50 +26,49 @@ Config &Config::operator=(const Config &other) {
 #pragma endregion
 
 #pragma region Setters
-void Config::set_index(const std::string &index) {
+void config::set_index(const std::string &index) {
     index_.push_back(index);
 }
 
-void Config::set_error_page(const uint &error_code, const std::string &error_page) {
+void config::set_error_page(const uint &error_code, const std::string &error_page) {
     error_page_.insert(std::pair<uint, std::string>(error_code, error_page));
 }
 
-void Config::set_max_client_body_size(const std::string &max_client_body_size) {
+void config::set_max_client_body_size(const std::string &max_client_body_size) {
     max_client_body_size_ = max_client_body_size;
 }
 
-void Config::set_auto_index(const bool &autoindex) {
+void config::set_auto_index(const bool &autoindex) {
     auto_index_ = autoindex;
 }
 #pragma endregion
 
 #pragma region Getters
-const std::string &Config::get_root() {
+const std::string &config::get_root() {
     return (root_);
 }
 
-std::vector<std::string> &Config::get_index() {
+std::vector<std::string> &config::get_index() {
     return (index_);
 }
 
-std::map<uint, std::string> &Config::get_error_page() {
+std::map<uint, std::string> &config::get_error_page() {
     return (error_page_);
 }
 
-const std::string &Config::get_max_client_body_size() {
+const std::string &config::get_max_client_body_size() {
     return (max_client_body_size_);
 }
 
-const bool &Config::get_auto_index() const {
+const bool &config::get_auto_index() const {
     return (auto_index_);
 }
 #pragma endregion
 
-#pragma region File Parser
 /// @brief Parse the IP address from the line from the config file and set it to the server object
 /// @param line The line from the config file
 /// @param server The server object
-void Config::host(const std::string &line, server &server) {
+void config::host(const std::string &line, server &server) {
     std::string host;
     if (line.at(line.size() - 1) != ';')
         WebServer::log(WARM_CFG_SEMICOLON, warning);
@@ -84,7 +82,7 @@ void Config::host(const std::string &line, server &server) {
 /// @brief Parse the port from the line from the config file and set it to the server object
 /// @param line The line from the config file
 /// @param server The server object
-void Config::port(const std::string &line, server &server) {
+void config::port(const std::string &line, server &server) {
     int port = 80;
     if (line.at(line.size() - 1) != ';')
         WebServer::log(WARM_CFG_SEMICOLON, warning);
@@ -106,7 +104,7 @@ void Config::port(const std::string &line, server &server) {
 /// @param server The server object
 /// @param line_number The starting line number
 /// @param file The config file stream
-void Config::location(std::string line, server &server, std::ifstream &file) {
+void config::location(std::string line, server &server, std::ifstream &file) {
     Location location;
     location.set_path(line.substr(line.find_first_of(' ') + 1, line.find_last_of(' ') - line.find_first_of(' ') - 1));
     while (std::getline(file, line) && !file.eof() && line.find('}') == std::string::npos) {
@@ -133,7 +131,7 @@ void Config::location(std::string line, server &server, std::ifstream &file) {
 /// @brief Parse the limit_except block from the config file and add it to the location object
 /// @param line The line from the config file
 /// @param location The location object
-void Config::limit_except(const std::string &line, Location &location) {
+void config::limit_except(const std::string &line, Location &location) {
     std::stringstream ss(line);
     std::string word;
     while (ss >> word) {
@@ -144,7 +142,7 @@ void Config::limit_except(const std::string &line, Location &location) {
 
 /// @brief Check line for ending semicolon and log a warning if it's missing
 /// @param line The line from the config file
-void Config::check_semicolon(const std::string &line) {
+void config::check_semicolon(const std::string &line) {
     if (line.size() == 0)
         return;
     if (line.at(line.size() - 1) != '{' && line.at(line.size() - 1) != '}' && line.at(line.size() - 1) != ';')
@@ -154,7 +152,7 @@ void Config::check_semicolon(const std::string &line) {
 /// @brief Parse the config file and create server objects
 /// @param path The path to the config file
 /// @param servers The vector of server objects
-void Config::parse_config_file(const std::string &path, std::vector<server> &servers) {
+void config::parse_config_file(const std::string &path, std::vector<server> &servers) {
     std::ifstream file(path.c_str());
     if (!file.is_open())
         WebServer::log(ERR_CANT_OPEN_FILE + path, error);
@@ -163,7 +161,7 @@ void Config::parse_config_file(const std::string &path, std::vector<server> &ser
         if (line.size() >= 2 && line.find("server") != std::string::npos && line.at(line.size() - 1) == '{') {
             server server;
             while (std::getline(file, line) && !file.eof() && line.find('}') == std::string::npos) {
-                Config::check_semicolon(line);
+                config::check_semicolon(line);
                 if (line.find("listen") != std::string::npos) {
                     if (std::count(line.begin(), line.end(), ':') > 1)
                         WebServer::log(ERR_CFG_LISTEN, error);
@@ -205,7 +203,7 @@ void Config::parse_config_file(const std::string &path, std::vector<server> &ser
     file.close();
 }
 
-void Config::display_configs(std::vector<server> &servers) {
+void config::display_configs(std::vector<server> &servers) {
     for (size_t i = 0; i < servers.size(); i++) {
         std::cout << BLUE << "Host " << servers[i].get_host() << ":" << servers[i].get_port() << RESET << std::endl;
         std::cout << "Server name: ";
@@ -258,5 +256,3 @@ void Config::display_configs(std::vector<server> &servers) {
         }
     }
 }
-
-#pragma endregion
