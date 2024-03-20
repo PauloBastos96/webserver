@@ -1,7 +1,7 @@
 #ifndef CONFIG_TPP
 #define CONFIG_TPP
 
-#include "webserver.hpp"
+#include <webserver/webserver.hpp>
 #include "logger.hpp"
 
 /// @brief Parse error pages from the configuration file

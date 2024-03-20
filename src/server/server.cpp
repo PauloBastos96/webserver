@@ -2,7 +2,9 @@
 #include <server/server.hpp>
 #include "location/location.hpp"
 
-server::server() {
+#pragma region Constructors & Destructors
+
+Server::Server() {
     port_ = 80;
     host_ = "127.0.0.1";
     config_.set_root("/");
@@ -11,41 +13,47 @@ server::server() {
     config_.set_auto_index(false);
 }
 
-server::~server() {
+Server::~Server() {
 };
 
-void server::set_host(const std::string &host) {
+#pragma endregion
+
+#pragma region Setters
+
+void Server::set_host(const std::string &host) {
     host_ = host;
 }
 
-void server::set_port(const int &port) {
+void Server::set_port(const int &port) {
     port_ = port;
 }
 
-void server::set_server_name(const std::string &server_name) {
+void Server::set_server_name(const std::string &server_name) {
     server_name_.push_back(server_name);
 }
 
-void Config::set_root(const std::string &root) {
-    root_ = root;
-}
+#pragma endregion
 
-const int &server::get_port() const {
+#pragma region Getters
+
+const int &Server::get_port() const {
     return (port_);
 }
 
-const std::string &server::get_host() {
+const std::string &Server::get_host() {
     return (host_);
 }
 
-const std::vector<std::string> &server::get_server_name() {
+const std::vector<std::string> &Server::get_server_name() {
     return (server_name_);
 }
 
-Config &server::get_config() {
+Config &Server::get_config() {
     return (config_);
 }
 
-std::vector<Location> &server::get_locations() {
+std::vector<Location> &Server::get_locations() {
     return (locations_);
 }
+
+#pragma endregion

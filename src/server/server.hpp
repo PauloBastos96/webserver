@@ -1,16 +1,22 @@
 #ifndef SERVER_HPP
-# define SERVER_HPP
+#define SERVER_HPP
 
 #include <vector>
 #include "config.hpp"
 
 class Location;
 
-class server {
+class Server {
 public:
-    server();
+#pragma region Constructors & Destructors
 
-    ~server();
+    Server();
+
+    ~Server();
+
+#pragma endregion
+
+#pragma region Getters
 
     const int &get_port() const;
 
@@ -22,11 +28,17 @@ public:
 
     std::vector<Location> &get_locations();
 
+#pragma endregion
+
+#pragma region Setters
+
     void set_host(const std::string &host);
 
     void set_port(const int &port);
 
     void set_server_name(const std::string &server_name);
+
+#pragma endregion
 
 private:
     std::string host_;

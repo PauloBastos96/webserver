@@ -1,5 +1,5 @@
 #ifndef CONFIG_HPP
-# define CONFIG_HPP
+#define CONFIG_HPP
 
 #include <string>
 #include <fstream>
@@ -12,9 +12,9 @@ class Server;
 class Location;
 
 class Config {
+public:
 #pragma region File Parser
 
-public:
     static void parse_config_file(const std::string &path, std::vector<Server> &servers);
 
     static void display_configs(std::vector<Server> &servers);
@@ -32,7 +32,6 @@ public:
 
 #pragma region Constructors & Destructors
 
-public:
     Config();
 
     ~Config();
