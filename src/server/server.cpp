@@ -6,11 +6,12 @@
 #include <string.h>
 #include <iostream>
 #include <fstream>
+#include <fcntl.h>
 #include "server.hpp"
 #include "location.hpp"
 #include "logger.hpp"
 #include "webserver.hpp"
-#include <fcntl.h>
+#include "http_handler.hpp"
 
 Server::Server() {
 	port_ = 80;
@@ -92,13 +93,18 @@ void Server::setup_socket(struct addrinfo *addrinfo)
 		WebServer::log(std::string(ERR_SOCKET) + host_ + ":" + ss.str() , error);
 	int opt = 1;
 	setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int));
-	fcntl(socket_fd_, fcntl(socket_fd_, F_GETFL, 0) | O_NONBLOCK);
+	int flags = fcntl(socket_fd_, F_GETFL, 0);
+	fcntl(socket_fd_, F_SETFL, flags | O_NONBLOCK);
 	if (bind(socket_fd_, addrinfo->ai_addr, addrinfo->ai_addrlen) == -1)
 	{
 		close(socket_fd_);
 		WebServer::log(std::string(ERR_BIND) + host_ + ":" + ss.str(), error);
 	}
-	listen(socket_fd_, 20);
+	if (listen(socket_fd_, 10) == -1)
+	{
+		close(socket_fd_);
+		WebServer::log(std::string(ERR_LISTEN) + host_ + ":" + ss.str(), error);
+	}
 	freeaddrinfo(addrinfo);
 }
 
@@ -120,57 +126,40 @@ void Server::run(pollfd *fds)
 	struct sockaddr_in	client;
 	socklen_t			client_size = sizeof(client);
 	int bytes = 0;
+	(void)fds;
 
 	while (true)
 	{
-		fds[0].fd = socket_fd_;
-		fds[0].events = POLLIN;
-		int ret = poll(fds, 1, 1000);
-		if (ret == -1)
-			stop(true);
-		if (fds[0].revents & POLLIN)
+		int client_fd = accept(socket_fd_, (struct sockaddr *)&client, &client_size);
+		if (client_fd == -1)
 		{
-			int client_fd = accept(socket_fd_, (struct sockaddr *)&client, &client_size);
-			if (client_fd == -1)
-				stop(true);
-			fds[0].fd = client_fd;
-			fds[0].events = POLLIN | POLLOUT;
-			ret = poll(fds, 1, 1000);
-			if (ret == -1)
-			{
-				close(client_fd);
-				stop(true);
-			}
-			if (fds[0].revents & POLLIN)
-			{
-				bytes = read(client_fd, buffer, 1024);
-				if (bytes == -1)
-					WebServer::log("read failed", error);
-				if (bytes == 0)
-					continue;
-				buffer[bytes] = 0;
-				WebServer::log(buffer, debug);
-				if (fds[0].revents & POLLOUT)
-				{
-					std::string response = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n";
-					write(client_fd, response.c_str(), response.length());
-					std::fstream file;
-					file.open("test_pages/index.html", std::ios::in);
-					if (file.is_open())
-					{
-						while (file.getline(buffer, 1024))
-						{
-							write(client_fd, buffer, strlen(buffer));
-						}
-						file.close();
-					}
-					close(client_fd);
-					//close(socket_fd_);
-					//socket_fd_ = -1;
-					//break;
-				}
-			}
+			if (errno == EWOULDBLOCK || errno == EAGAIN)
+				continue;
+			WebServer::log("accept failed", error);
 		}
+		bytes = read(client_fd, buffer, 1024);
+		if (bytes == -1)
+			WebServer::log("read failed", error);
+		if (bytes == 0)
+			continue;
+		buffer[bytes] = 0;
+		WebServer::log(buffer, debug);
+		
+		HttpHandler handler(buffer, client_fd);
+		handler.processRequest();
+		// std::string response = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n";
+		// write(client_fd, response.c_str(), response.length());
+		// std::fstream file;
+		// file.open("test_pages/index.html", std::ios::in);
+		// if (file.is_open())
+		// {
+		// 	while (file.getline(buffer, 1024))
+		// 	{
+		// 		write(client_fd, buffer, strlen(buffer));
+		// 	}
+		// 	file.close();
+		// }
+		close(client_fd);
 	}
 }
 
