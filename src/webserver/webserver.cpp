@@ -5,6 +5,8 @@ std::vector<Server> &WebServer::get_servers() { return servers_; }
 
 std::ofstream WebServer::log_file_;
 
+bool WebServer::is_running = true;
+
 WebServer::WebServer() {
     log_file_.open("logs/webserv.log", std::ios::out | std::ios::trunc);
     if (!log_file_)

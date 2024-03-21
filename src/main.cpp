@@ -15,6 +15,12 @@ void	runServers(WebServer &webserver)
 	webserver.get_servers().at(0).start();
 }
 
+//Stop the webserver
+void exitSignalHandler(int signum) {
+	(void)signum;
+	WebServer::is_running = false;
+}
+
 int main(const int ac, const char **av) {
 	try {
 		WebServer webserver;
@@ -23,9 +29,12 @@ int main(const int ac, const char **av) {
 		// Parse the configuration file
 		webserver.config_servers(ac == 1 ? "configs/default.conf" : av[1]);
 		//config::display_configs(webserver.get_servers());
-		// Setup the servers
+		signal(SIGINT, exitSignalHandler);
 
+		// Setup the servers
 		runServers(webserver);
+
+		//handle exit signal
 
 		// ...
 		// while (true) {
@@ -49,6 +58,7 @@ int main(const int ac, const char **av) {
 
 		// End of each client connection
 		// }
+		WebServer::log("Webserver stopped", info);
 	} catch (const std::runtime_error &e) {
 		if (!strstr(e.what(), "[ERROR]"))
 			std::cerr << RED << "[FATAL]:	" << e.what() << RESET << std::endl;

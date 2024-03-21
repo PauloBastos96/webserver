@@ -11,6 +11,7 @@ public:
 
     ~WebServer();
     
+    static bool is_running;
     // Servers
 public:
     std::vector<Server> &get_servers();

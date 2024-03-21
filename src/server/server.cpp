@@ -128,7 +128,7 @@ void Server::run(pollfd *fds)
 	int bytes = 0;
 	(void)fds;
 
-	while (true)
+	while (WebServer::is_running)
 	{
 		int client_fd = accept(socket_fd_, (struct sockaddr *)&client, &client_size);
 		if (client_fd == -1)
@@ -161,6 +161,7 @@ void Server::run(pollfd *fds)
 		// }
 		close(client_fd);
 	}
+	stop(false);
 }
 
 void Server::start(void){
