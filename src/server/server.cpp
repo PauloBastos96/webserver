@@ -145,7 +145,7 @@ void Server::run(pollfd *fds)
 		buffer[bytes] = 0;
 		WebServer::log(buffer, debug);
 		
-		HttpHandler handler(buffer, client_fd);
+		HttpHandler handler(buffer, client_fd, this);
 		handler.processRequest();
 		// std::string response = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n";
 		// write(client_fd, response.c_str(), response.length());

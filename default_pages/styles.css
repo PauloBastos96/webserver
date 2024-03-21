@@ -1,0 +1,31 @@
+
+body {
+	font-family: Arial, sans-serif;
+	margin: 0;
+	padding: 0;
+	background-color: #1a1a1a;
+}
+h1 {
+	text-align: center;
+	margin-top: 50px;
+	color: #dad7ff;
+}
+p {
+	text-align: center;
+	margin-top: 20px;
+	color: #dad7ff;
+}
+
+#not-found {
+	text-align: center;
+	margin-top: 20px;
+	color: rgb(150, 0, 0);
+}
+
+img {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 50px;
+	width: 10%;
+}

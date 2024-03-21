@@ -35,4 +35,10 @@ enum log_level {
 # define ERR_BIND "Failed to bind socket for server: "
 # define ERR_LISTEN "Failed to listen on socket for server: "
 
+
+//HTTP status codes
+
+# define HTTP_200 "[200] OK |   URI:"
+# define HTTP_404 "[404] Not Found  |   URI:"
+
 #endif

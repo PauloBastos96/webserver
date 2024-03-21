@@ -12,6 +12,7 @@ HttpParser::HttpParser(const std::string &request)
 	
 	host_ = request.substr(request.find("Host: ") + 6, request.find("\r\n", request.find("Host: ")) - request.find("Host: ") - 6);
 
+	accept_ = request.substr(request.find("Accept: ") + 8, request.find("\r\n", request.find("Accept: ")) - request.find("Accept: ") - 8);
 	// Parse the request
 	// ...
 	// Extract the method, URI, and HTTP version
@@ -50,4 +51,9 @@ std::string HttpParser::get_http_version() const
 std::string HttpParser::get_host() const
 {
 	return (host_);
+}
+
+std::string HttpParser::get_accept() const
+{
+	return (accept_);
 }
