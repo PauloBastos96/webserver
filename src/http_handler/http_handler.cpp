@@ -82,18 +82,39 @@ std::string HttpHandler::readFile(const std::string &file_path)
 {
 	std::fstream file;
 	std::string content;
+	bool textFile;
 	char buffer[1024];
 
-	file.open(file_path.c_str(), std::ios::in);
-	if (file.is_open())
-	{
-		while (file.getline(buffer, 1024))
-			content += buffer;
+	textFile = isTextFile(file_path);
+	if (!textFile)
+		file.open(file_path.c_str(), std::ios::in | std::ios::binary);
+	else
+		file.open(file_path.c_str(), std::ios::in);
+	if (file.is_open()) {
+		if (!textFile) {
+			while (file.read(buffer, 1024))
+				content.append(buffer, 1024);
+		} else {
+			while (file.getline(buffer, 1024))
+				content += buffer;
+		}
 		file.close();
 	}
 	else
 		throw std::runtime_error("404");
 	return (content);
+}
+
+/// @brief Check if a file is a text file
+/// @param file_path The path of the file
+/// @return True if the file is a text file, false otherwise
+bool HttpHandler::isTextFile(const std::string &file_path)
+{
+	std::string extension = file_path.substr(file_path.find_last_of(".") + 1);
+	if (extension == "html" || extension == "css" || extension == "js" 
+		|| extension == "json" || extension == "xml" || extension ==  "svg")
+		return (true);
+	return (false);
 }
 
 /// @brief Get the content type of a file

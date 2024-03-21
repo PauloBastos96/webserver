@@ -18,6 +18,7 @@ private:
 	void sendResponse(const std::string &response, const std::string &content);
 	std::string readFile(const std::string &file_path);
 	std::string getContentType(const std::string &file_path);
+	bool isTextFile(const std::string &file_path);
 	
 public:
 	HttpHandler(const std::string &request, const int client_fd, Server *server);
