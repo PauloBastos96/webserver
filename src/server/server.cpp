@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <server/server.hpp>
 #include "location/location.hpp"
+#include <fcntl.h>
 
 #pragma region Constructors & Destructors
 
@@ -62,7 +63,7 @@ std::vector<Location> &Server::get_locations() {
     return (locations_);
 }
 
-int &Server::get_socket_fd() {
+const int &Server::get_socket_fd() const {
     return (socket_fd_);
 }
 
@@ -72,6 +73,8 @@ int &Server::get_socket_fd() {
 
 void Server::socket_setup() {
     socket_fd_ = socket(AF_INET, SOCK_STREAM, 0);
+    const int flags = fcntl(socket_fd_, F_GETFL, 0);
+    fcntl(socket_fd_, F_SETFL, flags | O_NONBLOCK);
     sockaddr_in address = {};
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;

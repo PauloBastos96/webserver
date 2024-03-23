@@ -14,7 +14,7 @@ int main(const int ac, const char **av) {
         Config::display_configs(webserver.get_servers());
         webserver.setup_sockets();
         webserver.setup_epoll();
-        webserver.handle_connections();
+        webserver.server_routine();
     } catch (const std::runtime_error &e) {
         return 1;
     } catch (const std::exception &e) {

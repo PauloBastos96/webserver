@@ -4,86 +4,121 @@
 #include <netinet/in.h>
 #include <cstring>
 #include <sys/epoll.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <csignal>
 
-/**
- * @brief Get the servers object
- *
- * @return std::vector<Server>& - Reference to the vector of servers
- */
-std::vector<Server> &WebServer::get_servers() { return servers_; }
-
-// Static member variable for logging
 std::ofstream WebServer::log_file_;
 
-/**
- * @brief Construct a new WebServer object
- *
- * Opens the log file and logs the start of the WebServer.
- */
-WebServer::WebServer() : epoll_fd_(epoll_create(1)) {
+#pragma region Constructors & Destructors
+
+WebServer::WebServer() : epoll_fd_(-1), events_(), server_number_(0) {
     log_file_.open("logs/webserv.log", std::ios::out | std::ios::trunc);
     if (!log_file_)
         throw std::runtime_error("Failed to open log file");
     log("WebServer started", info);
 }
 
-/**
- * @brief Destroy the WebServer object
- *
- * Closes the log file.
- */
 WebServer::~WebServer() {
     log_file_.close();
+    if (epoll_fd_ > 0)
+        close(epoll_fd_);
 }
 
-/**
- * @brief Set up the sockets for all servers
- */
+#pragma endregion
+
+#pragma region Getters
+
+std::vector<Server> &WebServer::get_servers() { return servers_; }
+
+#pragma endregion
+
+#pragma region Setup
+
 void WebServer::setup_sockets() {
     for (std::vector<Server>::iterator it = servers_.begin(); it != servers_.end(); ++it)
         it->socket_setup();
 }
 
-/**
- * @brief Set up epoll for handling multiple connections
- *
- * Checks the epoll instance and adds the socket file descriptor of each server to it.
- */
 void WebServer::setup_epoll() {
+    epoll_fd_ = epoll_create(1);
     if (epoll_fd_ == -1)
         log("Failed to create epoll file descriptor", error);
-    for (std::vector<Server>::iterator it = servers_.begin(); it != servers_.end(); ++it) {
-        struct epoll_event event;
-        event.events = EPOLLIN;
-        event.data.fd = it->get_socket_fd();
-        if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, it->get_socket_fd(), &event) == -1)
-            log("Failed to add file descriptor to epoll", error);
+    for (std::vector<Server>::iterator it = servers_.begin(); it != servers_.end(); ++it)
+        insert_epoll(it->get_socket_fd());
+}
+
+void WebServer::insert_epoll(int socket_fd) const {
+    epoll_event event = {};
+    event.events = EPOLLIN;
+    event.data.fd = socket_fd;
+    if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, socket_fd, &event) == -1)
+        log("Failed to add file descriptor to epoll", error);
+}
+
+#pragma endregion
+
+#pragma region Connection Handling
+
+bool WebServer::is_server_socket() {
+    for (std::vector<Server>::iterator it = servers_.begin(); it != servers_.end(); ++it)
+        if (it->get_socket_fd() == events_[server_number_].data.fd)
+            return true;
+    return false;
+}
+
+void WebServer::accept_connection() const {
+    sockaddr_in address = {};
+    socklen_t addrlen = sizeof(address);
+    const int client_socket = accept(events_[server_number_].data.fd, reinterpret_cast<struct sockaddr *>(&address),
+                                     &addrlen);
+    if (client_socket == -1)
+        log("Failed to accept the new client connection", warning);
+    const int flags = fcntl(client_socket, F_GETFL, 0);
+    if (flags == -1 || fcntl(client_socket, F_SETFL, flags | O_NONBLOCK) == -1)
+        log("Failed to set server socket to non-blocking mode", warning);
+    insert_epoll(client_socket);
+    log("Connection accepted", info);
+}
+
+void WebServer::handle_connection() const {
+    char buffer[BUFFER_SIZE];
+    const ssize_t bytes_read = recv(events_[server_number_].data.fd, buffer, sizeof(buffer), 0);
+    if (bytes_read > 0) {
+        const char *http_response = HTTP_RESPONSE;
+        if (send(events_[server_number_].data.fd, http_response, strlen(http_response), 0) == -1)
+            log("Failed to send the HTTP response", warning);
+        else
+            log("HTTP response sent to the client", info);
+    } else {
+        end_connection();
+        if (!bytes_read)
+            log("Client disconnected", info);
+        else
+            log("Failed to read from the client", warning);
     }
 }
 
-/**
- * @brief Handle incoming connections
- *
- * Waits for events on the epoll instance and handles incoming connections.
- */
-void WebServer::handle_connections() {
+void WebServer::end_connection() const {
+    if (epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, events_[server_number_].data.fd, NULL) == -1)
+        log("Failed to remove file descriptor from epoll", warning);
+    close(events_[server_number_].data.fd);
+}
+
+void WebServer::server_routine() {
     while (true) {
-        struct epoll_event events[10];
-        int num_events = epoll_wait(epoll_fd_, events, 10, -1);
+        const int num_events = epoll_wait(epoll_fd_, events_, MAX_EVENTS, 200);
         if (num_events == -1)
-            log("epoll_wait failed", error);
-        for (int i = 0; i < num_events; i++) {
-            if (events[i].events & EPOLLIN) {
-                sockaddr_in address = {};
-                socklen_t addrlen = sizeof(address);
-                const int new_socket = accept(events[i].data.fd, reinterpret_cast<struct sockaddr *>(&address),
-                                              &addrlen);
-                if (new_socket == -1)
-                    log("Failed to accept the new client connection", error);
-                const char *http_response = HTTP_RESPONSE;
-                send(new_socket, http_response, strlen(http_response), 0);
-                log("HTTP response sent to the client", info);
+            log("epoll failed", error);
+        for (server_number_ = 0; server_number_ < num_events; server_number_++) {
+            if (events_[server_number_].events & EPOLLIN) {
+                if (is_server_socket())
+                    accept_connection();
+                else
+                    handle_connection();
             }
         }
     }
 }
+
+#pragma endregion

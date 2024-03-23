@@ -28,7 +28,7 @@ public:
 
     std::vector<Location> &get_locations();
 
-    int &get_socket_fd();
+    const int &get_socket_fd() const;
 
 #pragma endregion
 
