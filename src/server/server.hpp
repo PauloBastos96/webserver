@@ -28,6 +28,8 @@ public:
 
     std::vector<Location> &get_locations();
 
+    int &get_socket_fd();
+
 #pragma endregion
 
 #pragma region Setters
@@ -40,12 +42,15 @@ public:
 
 #pragma endregion
 
+    void socket_setup();
+
 private:
     std::string host_;
     int port_;
     std::vector<std::string> server_name_;
     Config config_;
     std::vector<Location> locations_;
+    int socket_fd_;
 };
 
 #endif

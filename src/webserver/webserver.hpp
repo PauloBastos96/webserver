@@ -4,6 +4,7 @@
 #include <server/server.hpp>
 #include "logger.hpp"
 #include <vector>
+#include <poll.h>
 
 class WebServer {
 public:
@@ -25,9 +26,15 @@ public:
 private:
     static std::ofstream log_file_;
 
-    // Config
+    // Setup
 public:
-    void config_servers(const std::string &path);
+    void setup_sockets();
+    void setup_poll_fds();
+    void handle_connections();
+    void setup_servers();
+
+private:
+    std::vector<pollfd> fds_;
 };
 
 #endif

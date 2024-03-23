@@ -1,11 +1,14 @@
 #include <vector>
+#include <webserver.hpp>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <server/server.hpp>
 #include "location/location.hpp"
 
 #pragma region Constructors & Destructors
 
 Server::Server() {
-    port_ = 80;
+    port_ = 8080;
     host_ = "127.0.0.1";
     config_.set_root("/");
     config_.set_max_client_body_size("1m");
@@ -56,4 +59,24 @@ std::vector<Location> &Server::get_locations() {
     return (locations_);
 }
 
+int &Server::get_socket_fd() {
+    return (socket_fd_);
+}
+
 #pragma endregion
+
+#include <iostream>
+
+void Server::socket_setup() {
+    std::cout << "'" << host_ << "'" << std::endl;
+    socket_fd_ = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in address = {};
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(port_);
+    if (bind(socket_fd_, reinterpret_cast<sockaddr *>(&address), sizeof(address)))
+        WebServer::log("Failed to bind the socket", error);
+    else
+       WebServer::log("Socket binded", info);
+    listen(socket_fd_, 3);
+}
