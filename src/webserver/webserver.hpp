@@ -1,7 +1,7 @@
 #ifndef WEBSERVER_HPP
-# define WEBSERVER_HPP
+#define WEBSERVER_HPP
 
-#include <server.hpp>
+#include <server/server.hpp>
 #include "logger.hpp"
 #include <vector>
 
@@ -13,10 +13,10 @@ public:
 
     // Servers
 public:
-    std::vector<server> &get_servers();
+    std::vector<Server> &get_servers();
 
 private:
-    std::vector<server> servers_;
+    std::vector<Server> servers_;
 
     // Logger
 public:
@@ -25,9 +25,15 @@ public:
 private:
     static std::ofstream log_file_;
 
-    // Config
+    // Setup
 public:
-    void config_servers(const std::string &path);
+    void setup_sockets();
+    void setup_epoll();
+    void handle_connections();
+    void setup_servers();
+
+private:
+   int epoll_fd_;
 };
 
 #endif

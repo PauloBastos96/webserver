@@ -1,5 +1,5 @@
 #ifndef CONFIG_HPP
-# define CONFIG_HPP
+#define CONFIG_HPP
 
 #include <string>
 #include <fstream>
@@ -8,35 +8,41 @@
 #include <cstdlib>
 #include <map>
 
-class server;
+class Server;
 class Location;
 
-class config {
-    // Parse config file
+class Config {
 public:
-    static void parse_config_file(const std::string &path, std::vector<server> &servers);
+#pragma region File Parser
 
-    static void display_configs(std::vector<server> &servers);
+    static void parse_config_file(const std::string &path, std::vector<Server> &servers);
 
-    static void host(const std::string &line, server &server);
+    static void display_configs(std::vector<Server> &servers);
 
-    static void port(const std::string &line, server &server);
+    static void host(const std::string &line, Server &server);
 
-    static void location(std::string line, server &server, std::ifstream &file);
+    static void port(const std::string &line, Server &server);
+
+    static void location(std::string line, Server &server, std::ifstream &file);
 
     static void limit_except(const std::string &line, Location &location);
 
     static void check_semicolon(const std::string &line);
+#pragma endregion
 
-    // Config
-public:
-    config();
+#pragma region Constructors & Destructors
 
-    ~config();
+    Config();
 
-    config(const config &other);
+    ~Config();
 
-    config &operator=(const config &other);
+    Config(const Config &other);
+
+    Config &operator=(const Config &other);
+
+#pragma endregion
+
+#pragma region Getters
 
     const std::string &get_root();
 
@@ -48,6 +54,10 @@ public:
 
     const bool &get_auto_index() const;
 
+#pragma endregion
+
+#pragma region Setters
+
     void set_root(const std::string &root);
 
     void set_index(const std::string &index);
@@ -57,6 +67,8 @@ public:
     void set_max_client_body_size(const std::string &max_client_body_size);
 
     void set_auto_index(const bool &autoindex);
+
+#pragma endregion
 
 private:
     std::string root_;

@@ -1,48 +1,24 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include <cmath>
 #include <iostream>
-#include <cstring>
 #include <vector>
-#include <location.hpp>
-#include <server.hpp>
+#include "location/location.hpp"
 #include <config.hpp>
-#include <webserver.hpp>
+#include <webserver/webserver.hpp>
 
 int main(const int ac, const char **av) {
-	try {
-		WebServer webserver;
-		if (ac > 2)
-			WebServer::log("webserv: too many arguments", error);
-		// Parse the configuration file
-		webserver.config_servers(ac == 1 ? "configs/default.conf" : av[1]);
-		config::display_configs(webserver.get_servers());
-		// Setup the server
-		// ...
-		// while (true) {
-		// Use poll() to handle multiple client connections
-		// ...
-
-		// For each client connection
-		// ...
-
-		// Read the HTTP request
-		// ...
-
-		// Process the request
-		// ...
-
-		// Generate the HTTP response
-		// ...
-
-		// Send the response
-		// ...
-
-		// End of each client connection
-		// }
-	} catch (const std::runtime_error &e) {
-		return 1;
-	} catch (const std::exception &e) {
-		std::cerr << RED << "[FATAL]:	" << e.what() << RESET << std::endl;
-		return 1;
-	}
+    try {
+        WebServer webserver;
+        if (ac > 2)
+            WebServer::log("webserv: too many arguments", error);
+        Config::parse_config_file(ac == 1 ? "configs/default.conf" : av[1], webserver.get_servers());
+        Config::display_configs(webserver.get_servers());
+        webserver.setup_sockets();
+        webserver.setup_epoll();
+        webserver.handle_connections();
+    } catch (const std::runtime_error &e) {
+        return 1;
+    } catch (const std::exception &e) {
+        std::cerr << RED << "[FATAL]	" << e.what() << RESET << std::endl;
+        return 1;
+    }
 }
