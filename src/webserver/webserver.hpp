@@ -4,7 +4,6 @@
 #include <server/server.hpp>
 #include "logger.hpp"
 #include <vector>
-#include <poll.h>
 
 class WebServer {
 public:
@@ -29,12 +28,12 @@ private:
     // Setup
 public:
     void setup_sockets();
-    void setup_poll_fds();
+    void setup_epoll();
     void handle_connections();
     void setup_servers();
 
 private:
-    std::vector<pollfd> fds_;
+   int epoll_fd_;
 };
 
 #endif

@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <vector>
 #include <webserver.hpp>
 #include <sys/socket.h>
@@ -14,9 +15,11 @@ Server::Server() {
     config_.set_max_client_body_size("1m");
     config_.set_index("index.html");
     config_.set_auto_index(false);
+    socket_fd_ = -1;
 }
 
 Server::~Server() {
+    close(socket_fd_);
 };
 
 #pragma endregion
@@ -65,10 +68,9 @@ int &Server::get_socket_fd() {
 
 #pragma endregion
 
-#include <iostream>
+#pragma region Socket
 
 void Server::socket_setup() {
-    std::cout << "'" << host_ << "'" << std::endl;
     socket_fd_ = socket(AF_INET, SOCK_STREAM, 0);
     sockaddr_in address = {};
     address.sin_family = AF_INET;
@@ -76,7 +78,7 @@ void Server::socket_setup() {
     address.sin_port = htons(port_);
     if (bind(socket_fd_, reinterpret_cast<sockaddr *>(&address), sizeof(address)))
         WebServer::log("Failed to bind the socket", error);
-    else
-       WebServer::log("Socket binded", info);
     listen(socket_fd_, 3);
 }
+
+#pragma endregion
