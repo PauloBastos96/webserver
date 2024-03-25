@@ -1,11 +1,11 @@
+#include <fcntl.h>
+#include <netinet/in.h>
+#include <server/server.hpp>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
 #include <webserver.hpp>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <server/server.hpp>
 #include "location/location.hpp"
-#include <fcntl.h>
 
 #pragma region Constructors & Destructors
 
@@ -19,53 +19,33 @@ Server::Server() {
     socket_fd_ = -1;
 }
 
-Server::~Server() {
-    close(socket_fd_);
-};
+Server::~Server() { close(socket_fd_); };
 
 #pragma endregion
 
 #pragma region Setters
 
-void Server::set_host(const std::string &host) {
-    host_ = host;
-}
+void Server::set_host(const std::string &host) { host_ = host; }
 
-void Server::set_port(const int &port) {
-    port_ = port;
-}
+void Server::set_port(const int &port) { port_ = port; }
 
-void Server::set_server_name(const std::string &server_name) {
-    server_name_.push_back(server_name);
-}
+void Server::set_server_name(const std::string &server_name) { server_name_.push_back(server_name); }
 
 #pragma endregion
 
 #pragma region Getters
 
-const int &Server::get_port() const {
-    return (port_);
-}
+const int &Server::get_port() const { return (port_); }
 
-const std::string &Server::get_host() {
-    return (host_);
-}
+const std::string &Server::get_host() { return (host_); }
 
-const std::vector<std::string> &Server::get_server_name() {
-    return (server_name_);
-}
+const std::vector<std::string> &Server::get_server_name() { return (server_name_); }
 
-Config &Server::get_config() {
-    return (config_);
-}
+Config &Server::get_config() { return (config_); }
 
-std::vector<Location> &Server::get_locations() {
-    return (locations_);
-}
+std::vector<Location> &Server::get_locations() { return (locations_); }
 
-const int &Server::get_socket_fd() const {
-    return (socket_fd_);
-}
+const int &Server::get_socket_fd() const { return (socket_fd_); }
 
 #pragma endregion
 

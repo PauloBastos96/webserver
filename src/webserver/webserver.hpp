@@ -2,12 +2,25 @@
 #define WEBSERVER_HPP
 
 #include <server/server.hpp>
-#include "logger.hpp"
-#include <vector>
 #include <sys/epoll.h>
+#include <vector>
+#include "logger.hpp"
 
 #define MAX_EVENTS 10
 #define BUFFER_SIZE 10000
+
+
+#pragma region Forward Declarations
+
+struct Request {
+    std::string method;
+    std::string uri;
+    std::string http_version;
+    std::map<std::string, std::string> headers;
+    std::string body;
+};
+
+#pragma endregion
 
 class WebServer {
 public:
@@ -42,9 +55,12 @@ public:
 
     bool is_server_socket();
 
-    void handle_connection() const;
+    void handle_connection();
 
     void end_connection() const;
+
+    void parse_http_request(const std::string &data_received);
+
 #pragma endregion
 
 private:
@@ -53,6 +69,8 @@ private:
     int epoll_fd_;
     epoll_event events_[MAX_EVENTS];
     int server_number_;
+    int status_code_;
+    Request request_;
 };
 
 #endif

@@ -1,18 +1,18 @@
-#include <webserver/webserver.hpp>
-#include <iostream>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <cstring>
-#include <sys/epoll.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <csignal>
+#include <cstring>
+#include <fcntl.h>
+#include <iostream>
+#include <netinet/in.h>
+#include <sys/epoll.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <webserver/webserver.hpp>
 
 std::ofstream WebServer::log_file_;
 
 #pragma region Constructors & Destructors
 
-WebServer::WebServer() : epoll_fd_(-1), events_(), server_number_(0) {
+WebServer::WebServer() : epoll_fd_(-1), events_(), server_number_(0), status_code_(){
     log_file_.open("logs/webserv.log", std::ios::out | std::ios::trunc);
     if (!log_file_)
         throw std::runtime_error("Failed to open log file");
@@ -70,8 +70,8 @@ bool WebServer::is_server_socket() {
 void WebServer::accept_connection() const {
     sockaddr_in address = {};
     socklen_t addrlen = sizeof(address);
-    const int client_socket = accept(events_[server_number_].data.fd, reinterpret_cast<struct sockaddr *>(&address),
-                                     &addrlen);
+    const int client_socket =
+            accept(events_[server_number_].data.fd, reinterpret_cast<struct sockaddr *>(&address), &addrlen);
     if (client_socket == -1)
         log("Failed to accept the new client connection", warning);
     const int flags = fcntl(client_socket, F_GETFL, 0);
@@ -81,22 +81,54 @@ void WebServer::accept_connection() const {
     log("Connection accepted", info);
 }
 
-void WebServer::handle_connection() const {
-    char buffer[BUFFER_SIZE];
-    const ssize_t bytes_read = recv(events_[server_number_].data.fd, buffer, sizeof(buffer), 0);
-    if (bytes_read > 0) {
-        const char *http_response = HTTP_RESPONSE;
-        if (send(events_[server_number_].data.fd, http_response, strlen(http_response), 0) == -1)
-            log("Failed to send the HTTP response", warning);
-        else
-            log("HTTP response sent to the client", info);
-    } else {
-        end_connection();
-        if (!bytes_read)
-            log("Client disconnected", info);
-        else
-            log("Failed to read from the client", warning);
+void WebServer::parse_http_request(const std::string &data_received) {
+    request_ = Request();
+    std::string::size_type pos = data_received.find("\r\n\r\n");
+    std::string header_part = data_received.substr(0, pos);
+    request_.body = pos != std::string::npos ? data_received.substr(pos + 4) : "";
+
+    std::istringstream request_stream(header_part);
+    std::getline(request_stream, request_.method, ' ');
+    std::getline(request_stream, request_.uri, ' ');
+    std::getline(request_stream, request_.http_version);
+
+    std::string header_line;
+    while (std::getline(request_stream, header_line) && header_line != "\r") {
+        std::istringstream header_line_stream(header_line);
+        std::string header_name;
+        std::getline(header_line_stream, header_name, ':');
+        std::string header_value;
+        std::getline(header_line_stream, header_value);
+        request_.headers[header_name] = header_value;
     }
+
+    log("Method: " + request_.method, info);
+    log("URI: " + request_.uri, info);
+    log("HTTP Version: " + request_.http_version, info);
+    log("Headers: ", info);
+    for (std::map<std::string, std::string>::const_iterator it = request_.headers.begin(); it != request_.headers.end(); ++it) {
+        log(it->first + ": " + it->second, info);
+    }
+    log("Body: " + request_.body, info);
+    log("\n\n", info);
+}
+
+void WebServer::handle_connection() {
+    char buffer[BUFFER_SIZE];
+    const ssize_t bytes_received = recv(events_[server_number_].data.fd, buffer, BUFFER_SIZE, 0);
+    if (!bytes_received || bytes_received == -1) {
+        end_connection();
+        log(!bytes_received ? "Client disconnected" : "Failed to receive data from the client", info);
+        return;
+    }
+    const std::string data_received(buffer);
+    parse_http_request(data_received);
+
+    const std::string http_response = HTTP_RESPONSE;
+    log((send(events_[server_number_].data.fd, http_response.c_str(), http_response.size(), 0) != -1)
+                ? "HTTP response sent to the client"
+                : "Failed to send the HTTP response",
+        info);
 }
 
 void WebServer::end_connection() const {
@@ -112,10 +144,7 @@ void WebServer::server_routine() {
             log("epoll failed", error);
         for (server_number_ = 0; server_number_ < num_events; server_number_++) {
             if (events_[server_number_].events & EPOLLIN) {
-                if (is_server_socket())
-                    accept_connection();
-                else
-                    handle_connection();
+                is_server_socket() ? accept_connection() : handle_connection();
             }
         }
     }
