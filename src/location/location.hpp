@@ -4,6 +4,8 @@
 #include <config.hpp>
 #include <string>
 
+class Config;
+
 class Location {
 public:
 #pragma region Constructors & Destructors

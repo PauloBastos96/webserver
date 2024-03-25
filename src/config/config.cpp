@@ -1,10 +1,10 @@
 #include "config.hpp"
 #include "config.tpp"
 #include <iostream>
-#include "../location/location.hpp"
-#include "../server/server.hpp"
+#include "location.hpp"
+#include "server.hpp"
 #include <algorithm>
-#include <webserver/webserver.hpp>
+#include <webserver.hpp>
 
 #pragma region Constructors
 Config::Config() {}
@@ -77,7 +77,11 @@ const bool &Config::get_auto_index() const {
 /// @param server The server object
 void Config::host(const std::string &line, Server &server) {
     std::string host;
-    if (line.at(line.size() - 1) != ';')
+    size_t endPosition = line.size() - 1;
+
+    if (line.size() > 0)
+        endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2 : line.size() - 1;
+    if (line.at(endPosition) != ';')
         WebServer::log(WARM_CFG_SEMICOLON, warning);
     if (line.find_first_of(':') != std::string::npos)
         host = line.substr(line.find_first_of(' ') + 1, line.find_first_of(':') - line.find_first_of(' ') - 1);
@@ -91,7 +95,11 @@ void Config::host(const std::string &line, Server &server) {
 /// @param server The server object
 void Config::port(const std::string &line, Server &server) {
     int port = 80;
-    if (line.at(line.size() - 1) != ';')
+    size_t endPosition = line.size() - 1;
+
+    if (line.size() > 0)
+        endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2 : line.size() - 1;
+    if (line.at(endPosition) != ';')
         WebServer::log(WARM_CFG_SEMICOLON, warning);
     if (line.find_first_of(':') != std::string::npos) {
         std::string port_str = line.substr(line.find_first_of(':') + 1);
@@ -113,8 +121,11 @@ void Config::port(const std::string &line, Server &server) {
 /// @param file The config file stream
 void Config::location(std::string line, Server &server, std::ifstream &file) {
     Location location;
+    size_t endPosition;
     location.set_path(line.substr(line.find_first_of(' ') + 1, line.find_last_of(' ') - line.find_first_of(' ') - 1));
     while (std::getline(file, line) && !file.eof() && line.find('}') == std::string::npos) {
+        if (line.size() > 0)
+            endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2 : line.size() - 1;
         if (line.find("root") != std::string::npos)
             location.get_config().set_root(line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1));
         if (line.find("index") != std::string::npos && line.find("autoindex") == std::string::npos)
@@ -123,7 +134,7 @@ void Config::location(std::string line, Server &server, std::ifstream &file) {
             parse_error_page(line, location);
         if (line.find("max_client_body_size") != std::string::npos)
             location.get_config().set_max_client_body_size(line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1));
-        if (line.find("location") != std::string::npos && line.at(line.size() - 1) == '{')
+        if (line.find("location") != std::string::npos && line.at(endPosition) == '{')
             WebServer::log(ERR_CFG_MISSING_BRACKET, error);
         if (line.find("limit_except") != std::string::npos)
             limit_except(line, location);
@@ -152,9 +163,15 @@ void Config::limit_except(const std::string &line, Location &location) {
 void Config::check_semicolon(const std::string &line) {
     if (line.size() == 0)
         return;
-    if (line.at(line.size() - 1) != '{' && line.at(line.size() - 1) != '}' && line.at(line.size() - 1) != ';')
+    size_t endPosition = line.size() - 1;
+    
+    if (line.size() > 2)
+        endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2 : line.size() - 1;
+    if (line.at(endPosition) != '{' && line.at(endPosition) != '}' && line.at(endPosition) != ';' && line.at(endPosition) != '\r')
         WebServer::log(WARM_CFG_SEMICOLON, warning);
 }
+
+
 
 /// @brief Parse the config file and create server objects
 /// @param path The path to the config file
@@ -164,11 +181,16 @@ void Config::parse_config_file(const std::string &path, std::vector<Server> &ser
     if (!file.is_open())
         WebServer::log(ERR_CANT_OPEN_FILE + path, error);
     std::string line;
+    size_t endPosition = 0;
     while (std::getline(file, line) && !file.eof()) {
-        if (line.size() >= 2 && line.find("server") != std::string::npos && line.at(line.size() - 1) == '{') {
+         if (line.size() >= 2)
+            endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2 : line.size() - 1;
+        if (line.size() >= 2 && line.find("server") != std::string::npos && line.at(endPosition) == '{') {
             Server server;
             while (std::getline(file, line) && !file.eof() && line.find('}') == std::string::npos) {
                 Config::check_semicolon(line);
+                 if (line.size() >= 2)
+                    endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2 : line.size() - 1;
                 if (line.find("listen") != std::string::npos) {
                     if (std::count(line.begin(), line.end(), ':') > 1)
                         WebServer::log(ERR_CFG_LISTEN, error);
@@ -189,7 +211,7 @@ void Config::parse_config_file(const std::string &path, std::vector<Server> &ser
                 if (line.find("max_client_body_size") != std::string::npos)
                     server.get_config().set_max_client_body_size(line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1));
                 if (line.find("location") != std::string::npos){
-                    if (line.at(line.size() - 1) == '{')
+                    if (line.at(endPosition) == '{')
                         location(line, server, file);
                     else
                         WebServer::log(ERR_CFG_MISSING_BRACKET, error);
@@ -198,7 +220,7 @@ void Config::parse_config_file(const std::string &path, std::vector<Server> &ser
                     std::string autoindex = line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1);
                     server.get_config().set_auto_index(autoindex != "off");
                 }
-                if (line.find("server") != std::string::npos && line.at(line.size() - 1) == '{')
+                if (line.find("server") != std::string::npos && line.at(endPosition) == '{')
                     WebServer::log(ERR_CFG_MISSING_BRACKET, error);
             }
             if (line.find('}') == std::string::npos) {

@@ -1,11 +1,11 @@
 #include <fcntl.h>
 #include <netinet/in.h>
-#include <server/server.hpp>
+#include <server.hpp>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <vector>
 #include <webserver.hpp>
-#include "location/location.hpp"
+#include "location.hpp"
 
 #pragma region Constructors & Destructors
 
@@ -46,6 +46,8 @@ Config &Server::get_config() { return (config_); }
 std::vector<Location> &Server::get_locations() { return (locations_); }
 
 const int &Server::get_socket_fd() const { return (socket_fd_); }
+
+std::vector<int> &Server::get_connected_clients() { return (connected_clients_); }
 
 #pragma endregion
 

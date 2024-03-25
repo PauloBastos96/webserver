@@ -1,7 +1,7 @@
 #ifndef WEBSERVER_HPP
 #define WEBSERVER_HPP
 
-#include <server/server.hpp>
+#include <server.hpp>
 #include <sys/epoll.h>
 #include <vector>
 #include "logger.hpp"
@@ -39,6 +39,8 @@ public:
 #pragma endregion
 
 #pragma region Setup
+    static bool is_running;
+
     void setup_sockets();
 
     void setup_epoll();
@@ -51,7 +53,7 @@ public:
 
     void setup_servers();
 
-    void accept_connection() const;
+    void accept_connection();
 
     bool is_server_socket();
 
