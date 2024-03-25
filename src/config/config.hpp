@@ -11,6 +11,9 @@
 class Server;
 class Location;
 
+//End of line check
+#define IS_CRLF(c) (c == '\r')
+
 class Config {
 public:
 #pragma region File Parser

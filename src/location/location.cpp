@@ -1,4 +1,4 @@
-#include "location/location.hpp"
+#include "location.hpp"
 
 #pragma region Constructors & Destructors
 

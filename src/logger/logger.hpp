@@ -43,12 +43,9 @@ enum log_level {
 
 #pragma endregion
 
-#pragma region HTTP Responses
+//HTTP status codes
 
-#define HTTP_RESPONSE "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 591\n\n<!DOCTYPE html>\n<html>\n<head>\n    <title>Test Page for Webserver</title>\n    <style>\n        body {\n            background-color: black;\n            color: white;\n        }\n    </style>\n</head>\n<body>\n    <h1>Welcome to Diogo's & Paulo's Webserver</h1>\n    <p>This is a test page for our webserver. If you can see this page, it means our webserver is working correctly.</p>\n    <a href=https://github.com/diogoforte style=\\\"color: white;\\\">Visit Diogo's GitHub Profile</a>\n    <a href=https://github.com/PauloBastos96 style=\\\"color: white;\\\">Visit Paulo's GitHub Profile</a>\n</body>\n</html>\n"
-
-#define HTTP_RESPONSE2 "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 600\n\n<!DOCTYPE html>\n<html>\n<head>\n    <title>Webserver</title>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            margin: 0;\n            padding: 0;\n            background-color: #1a1a1a;\n        }\n\n        h1 {\n            text-align: center;\n            margin-top: 50px;\n            color: #dad7ff;\n        }\n\n        p {\n            text-align: center;\n            margin-top: 20px;\n            color: #dad7ff;\n        }\n    </style>\n</head>\n<body>\n<h1>Webserver</h1>\n<p>🟢 Webserver is running</p>\n</body>\n</html>\n"
-
-#pragma endregion
+# define HTTP_200 "[200] OK |   URI:"
+# define HTTP_404 "[404] Not Found  |   URI:"
 
 #endif

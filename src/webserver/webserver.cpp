@@ -6,9 +6,12 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <webserver/webserver.hpp>
+#include <webserver.hpp>
+#include <http_handler.hpp>
 
 std::ofstream WebServer::log_file_;
+
+bool WebServer::is_running = true;
 
 #pragma region Constructors & Destructors
 
@@ -67,7 +70,7 @@ bool WebServer::is_server_socket() {
     return false;
 }
 
-void WebServer::accept_connection() const {
+void WebServer::accept_connection() {
     sockaddr_in address = {};
     socklen_t addrlen = sizeof(address);
     const int client_socket =
@@ -79,6 +82,7 @@ void WebServer::accept_connection() const {
         log("Failed to set server socket to non-blocking mode", warning);
     insert_epoll(client_socket);
     log("Connection accepted", info);
+    servers_[server_number_].get_connected_clients().push_back(client_socket);
 }
 
 void WebServer::parse_http_request(const std::string &data_received) {
@@ -122,13 +126,8 @@ void WebServer::handle_connection() {
         return;
     }
     const std::string data_received(buffer);
-    parse_http_request(data_received);
-
-    const std::string http_response = HTTP_RESPONSE;
-    log((send(events_[server_number_].data.fd, http_response.c_str(), http_response.size(), 0) != -1)
-                ? "HTTP response sent to the client"
-                : "Failed to send the HTTP response",
-        info);
+    HttpHandler http_handler(data_received, events_[server_number_].data.fd, servers_);
+    http_handler.processRequest();
 }
 
 void WebServer::end_connection() const {
@@ -138,7 +137,7 @@ void WebServer::end_connection() const {
 }
 
 void WebServer::server_routine() {
-    while (true) {
+    while (WebServer::is_running) {
         const int num_events = epoll_wait(epoll_fd_, events_, MAX_EVENTS, 200);
         if (num_events == -1)
             log("epoll failed", error);
@@ -148,6 +147,7 @@ void WebServer::server_routine() {
             }
         }
     }
+    //TODO: close all sockets
 }
 
 #pragma endregion

@@ -2,9 +2,12 @@
 #define SERVER_HPP
 
 #include <vector>
-#include "config.hpp"
+#include <string>
+#include <config.hpp>
+#include <location.hpp>
 
 class Location;
+class Config;
 
 class Server {
 public:
@@ -30,6 +33,8 @@ public:
 
     const int &get_socket_fd() const;
 
+    std::vector<int> &get_connected_clients();
+
 #pragma endregion
 
 #pragma region Setters
@@ -51,6 +56,7 @@ private:
     Config config_;
     std::vector<Location> locations_;
     int socket_fd_;
+    std::vector<int> connected_clients_;
 };
 
 #endif
