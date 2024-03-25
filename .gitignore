@@ -3,3 +3,4 @@ obj
 */*.log
 webserv
 .vscode
+.clang-format
