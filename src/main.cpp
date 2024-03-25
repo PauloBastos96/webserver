@@ -1,19 +1,11 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include <cmath>
 #include <iostream>
-#include <cstring>
 #include <vector>
-#include <location.hpp>
-#include <server.hpp>
+#include "location.hpp"
 #include <config.hpp>
 #include <webserver.hpp>
 #include <signal.h>
-
-//TESTING
-void	runServers(WebServer &webserver)
-{
-	webserver.get_servers().at(0).start();
-}
+#include <string.h>
 
 //Stop the webserver
 void exitSignalHandler(int signum) {
@@ -24,47 +16,20 @@ void exitSignalHandler(int signum) {
 int main(const int ac, const char **av) {
 	try {
 		WebServer webserver;
-		if (ac > 2)
-			WebServer::log("webserv: too many arguments", error);
-		// Parse the configuration file
-		webserver.config_servers(ac == 1 ? "configs/default.conf" : av[1]);
-		//config::display_configs(webserver.get_servers());
-		signal(SIGINT, exitSignalHandler);
-
-		// Setup the servers
-		runServers(webserver);
-
-		//handle exit signal
-
-		// ...
-		// while (true) {
-		// Use poll() to handle multiple client connections
-		// ...
-
-		// For each client connection
-		// ...
-
-		// Read the HTTP request
-		// ...
-
-		// Process the request
-		// ...
-
-		// Generate the HTTP response
-		// ...
-
-		// Send the response
-		// ...
-
-		// End of each client connection
-		// }
+        if (ac > 2)
+            WebServer::log("webserv: too many arguments", error);
+        Config::parse_config_file(ac == 1 ? "configs/default.conf" : av[1], webserver.get_servers());
+        Config::display_configs(webserver.get_servers());
+        webserver.setup_sockets();
+        webserver.setup_epoll();
+        webserver.server_routine();
 		WebServer::log("Webserver stopped", info);
 	} catch (const std::runtime_error &e) {
 		if (!strstr(e.what(), "[ERROR]"))
-			std::cerr << RED << "[FATAL]:	" << e.what() << RESET << std::endl;
+			std::cerr << RED << "[FATAL]	" << e.what() << RESET << std::endl;
 		return 1;
 	} catch (const std::exception &e) {
-		std::cerr << RED << "[FATAL]:	" << e.what() << RESET << std::endl;
+		std::cerr << RED << "[FATAL]	" << e.what() << RESET << std::endl;
 		return 1;
 	}
 }

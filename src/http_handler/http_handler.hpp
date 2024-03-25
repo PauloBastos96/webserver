@@ -5,10 +5,16 @@
 #include "server.hpp"
 
 class HttpHandler{
+public:
+	HttpHandler(const std::string &request, const int client_fd, std::vector<Server> &server);
+	~HttpHandler(void);
+	
+	void processRequest(void);
+
 private:
-	HttpParser	request_;
-	Server		*server_;
-	int 		client_fd_;
+	HttpParser				request_;
+	int 					client_fd_;
+	Server 					server_;
 
 	void processGet(void);
 	void processPost(void);
@@ -19,12 +25,6 @@ private:
 	std::string readFile(const std::string &file_path);
 	std::string getContentType(const std::string &file_path);
 	bool isTextFile(const std::string &file_path);
-	
-public:
-	HttpHandler(const std::string &request, const int client_fd, Server *server);
-	~HttpHandler(void);
-	
-	void processRequest(void);
 };
 
 #endif

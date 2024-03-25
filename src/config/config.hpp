@@ -1,5 +1,5 @@
 #ifndef CONFIG_HPP
-# define CONFIG_HPP
+#define CONFIG_HPP
 
 #include <string>
 #include <fstream>
@@ -8,15 +8,16 @@
 #include <cstdlib>
 #include <map>
 
-//End of line check
-#define IS_CRLF(c) (c == '\r')
-
 class Server;
 class Location;
 
-class config {
-    // Parse config file
+//End of line check
+#define IS_CRLF(c) (c == '\r')
+
+class Config {
 public:
+#pragma region File Parser
+
     static void parse_config_file(const std::string &path, std::vector<Server> &servers);
 
     static void display_configs(std::vector<Server> &servers);
@@ -30,16 +31,21 @@ public:
     static void limit_except(const std::string &line, Location &location);
 
     static void check_semicolon(const std::string &line);
+#pragma endregion
 
-    // Config
-public:
-    config();
+#pragma region Constructors & Destructors
 
-    ~config();
+    Config();
 
-    config(const config &other);
+    ~Config();
 
-    config &operator=(const config &other);
+    Config(const Config &other);
+
+    Config &operator=(const Config &other);
+
+#pragma endregion
+
+#pragma region Getters
 
     const std::string &get_root();
 
@@ -51,6 +57,10 @@ public:
 
     const bool &get_auto_index() const;
 
+#pragma endregion
+
+#pragma region Setters
+
     void set_root(const std::string &root);
 
     void set_index(const std::string &index);
@@ -60,6 +70,8 @@ public:
     void set_max_client_body_size(const std::string &max_client_body_size);
 
     void set_auto_index(const bool &autoindex);
+
+#pragma endregion
 
 private:
     std::string root_;

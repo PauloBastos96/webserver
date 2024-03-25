@@ -5,9 +5,15 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <iostream>
+#include <sys/socket.h>
 
-HttpHandler::HttpHandler(const std::string &request, const int client_fd, Server *server) : 
-	request_(request), server_(server), client_fd_(client_fd){}
+HttpHandler::HttpHandler(const std::string &request, const int client_fd, std::vector<Server> &servers) : 
+	request_(request), client_fd_(client_fd){
+	for (std::vector<Server>::iterator server_it = servers.begin(); server_it != servers.end(); ++server_it)
+		for (std::vector<int>::iterator fd_it = server_it->get_connected_clients().begin(); fd_it != server_it->get_connected_clients().end(); ++fd_it)
+			if (*fd_it == client_fd_)
+				server_ = *server_it;
+}
 
 HttpHandler::~HttpHandler(){}
 
@@ -27,8 +33,8 @@ void HttpHandler::processRequest(void)
 /// @param content The content to send
 void HttpHandler::sendResponse(const std::string &response, const std::string &content)
 {
-	write(client_fd_, response.c_str(), response.length());
-	write(client_fd_, content.c_str(), content.length());
+	send(client_fd_, response.c_str(), response.length(), 0);
+	send(client_fd_, content.c_str(), content.length(), 0);
 }
 
 /// @brief Process a GET request
@@ -41,13 +47,13 @@ void HttpHandler::processGet(void)
 
 	try {
 		if (request_.get_uri() == "/") {
-			for (size_t i = 0; i < server_->get_config().get_index().size(); i++) {
-				file_path = server_->get_config().get_root() + "/" + server_->get_config().get_index().at(i);
+			for (size_t i = 0; i < server_.get_config().get_index().size(); i++) {
+				file_path = server_.get_config().get_root() + "/" + server_.get_config().get_index().at(i);
 				if (stat(file_path.c_str(), &buffer) == 0)
 					break;
 			}
 		} else
-			file_path = server_->get_config().get_root() + "/" + request_.get_uri();
+			file_path = server_.get_config().get_root() + "/" + request_.get_uri();
 		content = readFile(file_path);
 		std::string response = responseBuilder("200", "OK", getContentType(file_path));
 		sendResponse(response, content);
