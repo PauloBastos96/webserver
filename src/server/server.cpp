@@ -73,15 +73,22 @@ const int &Server::get_socket_fd() const {
 
 void Server::socket_setup() {
     socket_fd_ = socket(AF_INET, SOCK_STREAM, 0);
+    if (socket_fd_ == -1)
+        WebServer::log("Failed to create the socket", error);
+    const int optval = 1;
+    if (setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
+        WebServer::log("Failed to set socket options", error);
     const int flags = fcntl(socket_fd_, F_GETFL, 0);
-    fcntl(socket_fd_, F_SETFL, flags | O_NONBLOCK);
+    if (flags == -1 || fcntl(socket_fd_, F_SETFL, flags | O_NONBLOCK) == -1)
+        WebServer::log("Failed to set server socket to non-blocking mode", error);
     sockaddr_in address = {};
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(port_);
     if (bind(socket_fd_, reinterpret_cast<sockaddr *>(&address), sizeof(address)))
         WebServer::log("Failed to bind the socket", error);
-    listen(socket_fd_, 3);
+    if (listen(socket_fd_, 10))
+        WebServer::log("Failed to listen on the socket", error);
 }
 
 #pragma endregion

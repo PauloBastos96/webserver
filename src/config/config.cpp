@@ -165,7 +165,7 @@ void Config::parse_config_file(const std::string &path, std::vector<Server> &ser
         WebServer::log(ERR_CANT_OPEN_FILE + path, error);
     std::string line;
     while (std::getline(file, line) && !file.eof()) {
-        if (line.size() >= 2 && line.find("server") != std::string::npos && line.at(line.size() - 2) == '{') {
+        if (line.size() >= 2 && line.find("server") != std::string::npos && line.at(line.size() - 1) == '{') {
             Server server;
             while (std::getline(file, line) && !file.eof() && line.find('}') == std::string::npos) {
                 Config::check_semicolon(line);
@@ -189,7 +189,7 @@ void Config::parse_config_file(const std::string &path, std::vector<Server> &ser
                 if (line.find("max_client_body_size") != std::string::npos)
                     server.get_config().set_max_client_body_size(line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1));
                 if (line.find("location") != std::string::npos){
-                    if (line.at(line.size() - 2) == '{')
+                    if (line.at(line.size() - 1) == '{')
                         location(line, server, file);
                     else
                         WebServer::log(ERR_CFG_MISSING_BRACKET, error);
@@ -211,7 +211,6 @@ void Config::parse_config_file(const std::string &path, std::vector<Server> &ser
 }
 
 void Config::display_configs(std::vector<Server> &servers) {
-    std::cout << "Server count " << servers.size() << std::endl;
     for (size_t i = 0; i < servers.size(); i++) {
         std::cout << BLUE << "Host " << servers[i].get_host() << ":" << servers[i].get_port() << RESET << std::endl;
         std::cout << "Server name: ";
