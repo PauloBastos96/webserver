@@ -8,6 +8,9 @@
 #include <cstdlib>
 #include <map>
 
+//End of line check
+#define IS_CRLF(c) (c == '\r')
+
 class Server;
 class Location;
 
