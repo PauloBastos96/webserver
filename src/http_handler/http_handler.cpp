@@ -44,6 +44,7 @@ void HttpHandler::processGet(void)
 	std::string content;
 	std::string file_path;
 	struct stat buffer;
+	std::stringstream ss;
 
 	try {
 		if (request_.get_uri() == "/") {
@@ -55,7 +56,8 @@ void HttpHandler::processGet(void)
 		} else
 			file_path = server_.get_config().get_root() + "/" + request_.get_uri();
 		content = readFile(file_path);
-		std::string response = responseBuilder("200", "OK", getContentType(file_path));
+		ss << content.length();
+		std::string response = responseBuilder("200", "OK", getContentType(file_path), ss.str());
 		sendResponse(response, content);
 		WebServer::log(std::string(HTTP_200) + request_.get_uri(), info);
 	}
@@ -75,9 +77,11 @@ void HttpHandler::processDelete(){}
 /// @param status_message The status message
 /// @param content_type The content type
 /// @return The response header
-std::string HttpHandler::responseBuilder(std::string status_code, std::string status_message, std::string content_type)
+std::string HttpHandler::responseBuilder(std::string status_code, std::string status_message, std::string content_type, std::string content_length)
 {
-	std::string response = "HTTP/1.1 " + status_code + " " + status_message + "\n" + "Content-Type: " + content_type + "\n\n";
+	std::string response = "HTTP/1.1 " + status_code + " " + status_message + "\n" 
+		+ "Content-Type: " + content_type + "\n"
+		+ "Content-Length:" + content_length + "\n\r\n";
 	return (response);
 }
 

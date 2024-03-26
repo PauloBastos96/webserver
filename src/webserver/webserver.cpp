@@ -85,43 +85,16 @@ void WebServer::accept_connection() {
     servers_[server_number_].get_connected_clients().push_back(client_socket);
 }
 
-void WebServer::parse_http_request(const std::string &data_received) {
-    request_ = Request();
-    std::string::size_type pos = data_received.find("\r\n\r\n");
-    std::string header_part = data_received.substr(0, pos);
-    request_.body = pos != std::string::npos ? data_received.substr(pos + 4) : "";
-
-    std::istringstream request_stream(header_part);
-    std::getline(request_stream, request_.method, ' ');
-    std::getline(request_stream, request_.uri, ' ');
-    std::getline(request_stream, request_.http_version);
-
-    std::string header_line;
-    while (std::getline(request_stream, header_line) && header_line != "\r") {
-        std::istringstream header_line_stream(header_line);
-        std::string header_name;
-        std::getline(header_line_stream, header_name, ':');
-        std::string header_value;
-        std::getline(header_line_stream, header_value);
-        request_.headers[header_name] = header_value;
-    }
-
-    log("Method: " + request_.method, info);
-    log("URI: " + request_.uri, info);
-    log("HTTP Version: " + request_.http_version, info);
-    log("Headers: ", info);
-    for (std::map<std::string, std::string>::const_iterator it = request_.headers.begin(); it != request_.headers.end(); ++it) {
-        log(it->first + ": " + it->second, info);
-    }
-    log("Body: " + request_.body, info);
-    log("\n\n", info);
-}
-
 void WebServer::handle_connection() {
     char buffer[BUFFER_SIZE];
     const ssize_t bytes_received = recv(events_[server_number_].data.fd, buffer, BUFFER_SIZE, 0);
     if (!bytes_received || bytes_received == -1) {
         end_connection();
+        std::vector<int>::iterator it = servers_[server_number_].get_connected_clients().begin();
+        for (; it != servers_[server_number_].get_connected_clients().end(); ++it)
+            if (*it == events_[server_number_].data.fd)
+                break;
+        servers_[server_number_].get_connected_clients().erase(it);
         log(!bytes_received ? "Client disconnected" : "Failed to receive data from the client", info);
         return;
     }

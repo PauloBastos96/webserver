@@ -20,7 +20,7 @@ private:
 	void processPost(void);
 	void processDelete(void);
 
-	std::string responseBuilder(std::string status_code, std::string status_message, std::string content_type);
+	std::string responseBuilder(std::string status_code, std::string status_message, std::string content_type, std::string content_length = "0");
 	void sendResponse(const std::string &response, const std::string &content);
 	std::string readFile(const std::string &file_path);
 	std::string getContentType(const std::string &file_path);
