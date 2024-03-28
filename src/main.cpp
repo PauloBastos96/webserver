@@ -19,7 +19,7 @@ int main(const int ac, const char **av) {
         if (ac > 2)
             WebServer::log("webserv: too many arguments", error);
         Config::parse_config_file(ac == 1 ? "configs/default.conf" : av[1], webserver.get_servers());
-        Config::display_configs(webserver.get_servers());
+        //Config::display_configs(webserver.get_servers());
         webserver.setup_sockets();
         webserver.setup_epoll();
         webserver.server_routine();
