@@ -42,11 +42,11 @@ class WebServer {
 
     void setup_servers();
 
-    void accept_connection(Server &server, int fd);
+    void accept_connection(Server &server, int fd) const;
 
     bool is_server_socket(int fd);
 
-    void handle_connection(Server &server, int fd);
+    void handle_connection(Server &server, int fd) const;
 
     void end_connection(Server &server, int fd) const;
 

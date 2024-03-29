@@ -66,6 +66,8 @@ void WebServer::setup_server_sockets() {
             log("Failed to listen on the server socket", warning);
         it->set_socket(server_socket);
         insert_epoll(server_socket);
+        std::cout << "Added server socket " << server_socket << " to epoll"
+                  << std::endl;
     }
 }
 
@@ -92,7 +94,7 @@ size_t WebServer::find_server(const int fd) {
     return -1;
 }
 
-void WebServer::accept_connection(Server &server, const int fd) {
+void WebServer::accept_connection(Server &server, const int fd) const {
     sockaddr_in address = {};
     socklen_t addrlen = sizeof(address);
     const int client_socket =
@@ -104,10 +106,12 @@ void WebServer::accept_connection(Server &server, const int fd) {
         log("Failed to set client socket to non-blocking mode", warning);
     server.get_connected_clients().push_back(client_socket);
     insert_epoll(client_socket);
+    std::cout << "Added client socket " << client_socket << " to epoll"
+              << std::endl;
     log("Connection accepted", info);
 }
 
-void WebServer::handle_connection(Server &server, const int fd) {
+void WebServer::handle_connection(Server &server, const int fd) const {
     char buffer[BUFFER_SIZE];
     const ssize_t bytes_received = recv(fd, buffer, BUFFER_SIZE, 0);
     if (!bytes_received || bytes_received == -1) {
@@ -119,7 +123,7 @@ void WebServer::handle_connection(Server &server, const int fd) {
     }
     const std::string data_received(buffer);
     HttpHandler http_handler(data_received, fd, server);
-    http_handler.processRequest();
+    http_handler.process_request();
     // std::string response = "HTTP/1.1 200 OK\r\n"
     //     "Content-Type: text/plain\r\n"
     //     "Content-Length: 12\r\n\r\n"

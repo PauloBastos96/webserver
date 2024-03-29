@@ -2,10 +2,8 @@
 #include "webserver.hpp"
 #include <fstream>
 #include <iostream>
-#include <string.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 HttpHandler::HttpHandler(const std::string &request, const int client_fd,
                          const Server &server)
@@ -14,30 +12,30 @@ HttpHandler::HttpHandler(const std::string &request, const int client_fd,
 HttpHandler::~HttpHandler() {}
 
 /// @brief Process the request
-void HttpHandler::processRequest(void) {
+void HttpHandler::process_request() {
     if (request_.get_method() == "GET")
-        processGet();
+        process_get();
     else if (request_.get_method() == "POST")
-        processPost();
+        process_post();
     else if (request_.get_method() == "DELETE")
-        processDelete();
+        process_delete();
 }
 
 /// @brief Send the response to the client
 /// @param response The response header to send
 /// @param content The content to send
-void HttpHandler::sendResponse(const std::string &response,
-                               const std::string &content) {
+void HttpHandler::send_response(const std::string &response,
+                                const std::string &content) {
     send(client_fd_, response.c_str(), response.length(), 0);
     send(client_fd_, content.c_str(), content.length(), 0);
 }
 
 /// @brief Process a GET request
-void HttpHandler::processGet(void) {
+void HttpHandler::process_get() {
     std::fstream file;
     std::string content;
     std::string file_path;
-    struct stat buffer;
+    Stat buffer;
     std::stringstream ss;
 
     try {
@@ -52,34 +50,35 @@ void HttpHandler::processGet(void) {
         } else
             file_path =
                 server_.get_config().get_root() + "/" + request_.get_uri();
-        content = readFile(file_path);
+        content = read_file(file_path);
         ss << content.length();
-        std::string response =
-            responseBuilder("200", "OK", getContentType(file_path), ss.str());
-        sendResponse(response, content);
+        std::string response = response_builder(
+            "200", "OK", get_content_type(file_path), ss.str());
+        send_response(response, content);
         WebServer::log(std::string(HTTP_200) + request_.get_uri(), info);
     } catch (const std::runtime_error &e) {
-        content = readFile("default_pages/not_found.html");
+        content = read_file("default_pages/not_found.html");
         ss << content.length();
         std::string response =
-            responseBuilder("404", "Not Found", "text/html", ss.str());
-        sendResponse(response, content);
+            response_builder("404", "Not Found", "text/html", ss.str());
+        send_response(response, content);
         WebServer::log(std::string(HTTP_404) + request_.get_uri(), warning);
     }
 }
 
-void HttpHandler::processPost() {}
-void HttpHandler::processDelete() {}
+void HttpHandler::process_post() {}
+void HttpHandler::process_delete() {}
 
 /// @brief Build the response header
 /// @param status_code The status code
 /// @param status_message The status message
 /// @param content_type The content type
+/// @param content_length The content length
 /// @return The response header
-std::string HttpHandler::responseBuilder(std::string status_code,
-                                         std::string status_message,
-                                         std::string content_type,
-                                         std::string content_length) {
+std::string HttpHandler::response_builder(const std::string &status_code,
+                                          const std::string &status_message,
+                                          const std::string &content_type,
+                                          const std::string &content_length) {
     std::string response = "HTTP/1.1 " + status_code + " " + status_message +
                            "\n" + "Content-Type: " + content_type + "\n" +
                            "Content-Length:" + content_length + "\n\r\n";
@@ -89,19 +88,18 @@ std::string HttpHandler::responseBuilder(std::string status_code,
 /// @brief Read requested file
 /// @param file_path The path of the file
 /// @return The content of the file
-std::string HttpHandler::readFile(const std::string &file_path) {
+std::string HttpHandler::read_file(const std::string &file_path) {
     std::fstream file;
     std::string content;
-    bool textFile;
-    char buffer[1024];
 
-    textFile = isTextFile(file_path);
-    if (!textFile)
+    const bool text_file = is_text_file(file_path);
+    if (!text_file)
         file.open(file_path.c_str(), std::ios::in | std::ios::binary);
     else
         file.open(file_path.c_str(), std::ios::in);
     if (file.is_open()) {
-        if (!textFile) {
+        char buffer[1024];
+        if (!text_file) {
             while (file.read(buffer, 1024))
                 content.append(buffer, 1024);
         } else {
@@ -117,8 +115,9 @@ std::string HttpHandler::readFile(const std::string &file_path) {
 /// @brief Check if a file is a text file
 /// @param file_path The path of the file
 /// @return True if the file is a text file, false otherwise
-bool HttpHandler::isTextFile(const std::string &file_path) {
-    std::string extension = file_path.substr(file_path.find_last_of(".") + 1);
+bool HttpHandler::is_text_file(const std::string &file_path) {
+    const std::string extension =
+        file_path.substr(file_path.find_last_of('.') + 1);
     if (extension == "html" || extension == "css" || extension == "js" ||
         extension == "json" || extension == "xml" || extension == "svg")
         return (true);
@@ -128,26 +127,26 @@ bool HttpHandler::isTextFile(const std::string &file_path) {
 /// @brief Get the content type of a file
 /// @param file_path The path of the file
 /// @return The content type of the file
-std::string HttpHandler::getContentType(const std::string &file_path) {
-    std::string extension = file_path.substr(file_path.find_last_of(".") + 1);
+std::string HttpHandler::get_content_type(const std::string &file_path) {
+    const std::string extension =
+        file_path.substr(file_path.find_last_of('.') + 1);
     if (extension == "html" || extension == "css")
         return ("text/" + extension);
-    else if (extension == "js")
+    if (extension == "js")
         return ("text/javascript");
-    else if (extension == "jpeg" || extension == "jpg")
+    if (extension == "jpeg" || extension == "jpg")
         return ("image/jpeg");
-    else if (extension == "png")
+    if (extension == "png")
         return ("image/png");
-    else if (extension == "gif")
+    if (extension == "gif")
         return ("image/gif");
-    else if (extension == "svg")
+    if (extension == "svg")
         return ("image/svg+xml");
-    else if (extension == "json")
+    if (extension == "json")
         return ("application/json");
-    else if (extension == "xml")
+    if (extension == "xml")
         return ("application/xml");
-    else if (extension == "form")
+    if (extension == "form")
         return ("application/x-www-form-urlencoded");
-    else
-        return ("text/plain");
+    return ("text/plain");
 }
