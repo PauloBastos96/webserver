@@ -22,6 +22,8 @@ INC = $(addprefix -I, $(shell find . -type d))
 SRC = $(wildcard $(SRC_PATH)*.cpp $(SRC_PATH)**/*.cpp)
 OBJ = $(SRC:$(SRC_PATH)%.cpp=$(OBJ_PATH)%.o)
 
+all: $(NAME)
+
 $(OBJ_PATH)%.o: $(SRC_PATH)%.cpp | $(OBJ_PATH)
 	 @mkdir -p $(dir $@)
 	 @$(CC) $(CFLAGS) $(INC) -c $< -o $@
@@ -42,8 +44,6 @@ $(NAME): $(OBJ) $(LOGS_PATH) $(CONFIGS_PATH)
 	@$(CC) $(CFLAGS) -o $(NAME) $(OBJ)
 	@printf  "\n$(EMOJI_PACKAGE)	$(WHITE)$(NAME)				$(YELLOW)compiled$(WHITE)\n"
 
-all: $(NAME)
-
 clean:
 	@rm -rf $(OBJ_PATH)
 	@rm -rf $(LOGS_PATH)
@@ -54,4 +54,7 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all re clean fclean
+format:
+	@find . -iname "*.cpp" -o -iname "*.hpp" | xargs clang-format -i
+
+.PHONY: all re clean fclean format

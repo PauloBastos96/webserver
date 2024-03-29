@@ -1,17 +1,17 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <vector>
-#include <string>
 #include <config.hpp>
 #include <location.hpp>
+#include <string>
+#include <vector>
 
 class Location;
 class Config;
 
 class Server {
-public:
-#pragma region Constructors & Destructors
+  public:
+#pragma region Constructors &Destructors
 
     Server();
 
@@ -31,7 +31,7 @@ public:
 
     std::vector<Location> &get_locations();
 
-    const int &get_socket_fd() const;
+    const int &get_socket() const;
 
     std::vector<int> &get_connected_clients();
 
@@ -45,17 +45,17 @@ public:
 
     void set_server_name(const std::string &server_name);
 
+    void set_socket(int socket);
+
 #pragma endregion
 
-    void socket_setup();
-
-private:
+  private:
     std::string host_;
     int port_;
     std::vector<std::string> server_name_;
     Config config_;
     std::vector<Location> locations_;
-    int socket_fd_;
+    int socket_;
     std::vector<int> connected_clients_;
 };
 
