@@ -9,14 +9,13 @@
 
 #pragma region Constructors &Destructors
 
-Server::Server() {
-    port_ = 8080;
-    host_ = "127.0.0.1";
+Server::Server()
+    : host_("127.0.0.1"), port_(8080), config_(), socket_(-1),
+      connected_clients_() {
     config_.set_root("/");
     config_.set_max_client_body_size("1m");
     config_.set_index("index.html");
     config_.set_auto_index(false);
-    socket_ = -1;
 }
 
 Server::~Server() {

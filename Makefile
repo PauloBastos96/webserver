@@ -54,6 +54,9 @@ fclean: clean
 
 re: fclean all
 
+valgrind: all
+	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --track-fds=all ./$(NAME)
+
 format:
 	@find . -iname "*.cpp" -o -iname "*.hpp" | xargs clang-format -i
 

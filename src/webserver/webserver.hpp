@@ -30,27 +30,21 @@ class WebServer {
 
     void setup_server_sockets();
 
-    void setup_epoll();
-
     void insert_epoll(int socket_fd) const;
 #pragma endregion
 
 #pragma region Connection Handling
     void server_routine();
 
-    size_t find_server(int fd);
+    std::vector<Server>::iterator find_server(int fd);
 
-    void setup_servers();
+    bool is_server(int fd);
 
     void accept_connection(Server &server, int fd) const;
-
-    bool is_server_socket(int fd);
 
     void handle_connection(Server &server, int fd) const;
 
     void end_connection(Server &server, int fd) const;
-
-    void parse_http_request(const std::string &data_received);
 
 #pragma endregion
 

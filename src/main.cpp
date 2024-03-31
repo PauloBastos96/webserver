@@ -1,13 +1,10 @@
-#include "location.hpp"
-#include <cmath>
 #include <config.hpp>
+#include <csignal>
+#include <cstring>
 #include <iostream>
-#include <signal.h>
-#include <string.h>
 #include <vector>
 #include <webserver.hpp>
 
-// Stop the webserver
 void exitSignalHandler(int signum) {
     (void)signum;
     WebServer::is_running = false;
