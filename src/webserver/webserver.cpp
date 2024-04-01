@@ -15,7 +15,7 @@ bool WebServer::is_running = true;
 
 #pragma region Constructors &Destructors
 
-WebServer::WebServer() : epoll_fd_(-1), events_(), status_code_() {
+WebServer::WebServer() : epoll_fd_(-1), events_() {
     log_file_.open("logs/webserv.log", std::ios::out | std::ios::trunc);
     if (!log_file_)
         throw std::runtime_error("Failed to open log file");
