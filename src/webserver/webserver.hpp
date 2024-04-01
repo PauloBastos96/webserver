@@ -6,7 +6,7 @@
 #include <sys/epoll.h>
 #include <vector>
 
-#define MAX_EVENTS 10
+#define MAX_EVENTS 16
 #define BUFFER_SIZE 10000
 
 class WebServer {
@@ -30,7 +30,7 @@ class WebServer {
 
     void setup_server_sockets();
 
-    void insert_epoll(int socket_fd) const;
+    void insert_epoll(int socket) const;
 #pragma endregion
 
 #pragma region Connection Handling
@@ -38,13 +38,13 @@ class WebServer {
 
     std::vector<Server>::iterator find_server(int fd);
 
-    bool is_server(int fd);
+    bool is_server(int socket);
 
-    void accept_connection(Server &server, int fd) const;
+    void accept_connection(Server &server, int socket) const;
 
     void handle_connection(Server &server, int fd) const;
 
-    void end_connection(Server &server, int fd) const;
+    void end_connection(Server &server, int socket) const;
 
 #pragma endregion
 

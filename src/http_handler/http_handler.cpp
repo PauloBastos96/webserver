@@ -4,10 +4,11 @@
 #include <iostream>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
-HttpHandler::HttpHandler(const std::string &request, const int client_fd,
+HttpHandler::HttpHandler(const std::string &request, const int client_socket,
                          const Server &server)
-    : request_(request), client_fd_(client_fd), server_(server) {}
+    : request_(request), client_socket_(client_socket), server_(server) {}
 
 HttpHandler::~HttpHandler() {}
 
@@ -19,6 +20,8 @@ void HttpHandler::process_request() {
         process_post();
     else if (request_.get_method() == "DELETE")
         process_delete();
+    else
+        WebServer::log("Unsupported method", warning);
 }
 
 /// @brief Send the response to the client
@@ -26,8 +29,8 @@ void HttpHandler::process_request() {
 /// @param content The content to send
 void HttpHandler::send_response(const std::string &response,
                                 const std::string &content) {
-    send(client_fd_, response.c_str(), response.length(), 0);
-    send(client_fd_, content.c_str(), content.length(), 0);
+    send(client_socket_, response.c_str(), response.length(), 0);
+    send(client_socket_, content.c_str(), content.length(), 0);
 }
 
 /// @brief Process a GET request
