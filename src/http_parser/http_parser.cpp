@@ -3,14 +3,11 @@
 
 HttpParser::HttpParser(const std::string &request) {
     request_ = request;
-    WebServer::log("Request: " + request_, info);
-
     size_t pos = request.find(' ');
     if (pos != std::string::npos)
         method_ = request.substr(0, pos);
     else
         WebServer::log("Invalid HTTP request: no method", error);
-
 
     size_t uri_start = pos + 1;
     pos = request.find(' ', uri_start);
@@ -23,7 +20,8 @@ HttpParser::HttpParser(const std::string &request) {
     if (version_start != std::string::npos) {
         size_t version_end = request.find("\r\n", version_start);
         if (version_end != std::string::npos)
-            http_version_ = request.substr(version_start + 5, version_end - version_start - 5);
+            http_version_ = request.substr(version_start + 5,
+                                           version_end - version_start - 5);
         else
             WebServer::log("Invalid HTTP request: no HTTP version", error);
     } else
