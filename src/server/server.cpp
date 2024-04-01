@@ -25,6 +25,23 @@ Server::~Server() {
 
 #pragma endregion
 
+#pragma region Operator Overload
+
+Server &Server::operator=(const Server &other) {
+    if (this != &other) {
+        host_ = other.host_;
+        port_ = other.port_;
+        server_name_ = other.server_name_;
+        config_ = other.config_;
+        locations_ = other.locations_;
+        socket_ = other.socket_;
+        connected_clients_ = other.connected_clients_;
+    }
+    return *this;
+}
+
+#pragma endregion
+
 #pragma region Setters
 
 void Server::set_host(const std::string &host) { host_ = host; }
