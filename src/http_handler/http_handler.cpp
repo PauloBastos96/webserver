@@ -32,11 +32,10 @@ void HttpHandler::send_response(const std::string &response,
     std::string message = response + content;
     size_t bytes_sent = 0;
 
-    while (bytes_sent < message.length())
-    {
-        ssize_t sent = send(client_fd_, message.c_str() + bytes_sent, message.length() - bytes_sent, 0);
-        if (sent == -1)
-        {
+    while (bytes_sent < message.length()) {
+        ssize_t sent = send(client_socket_, message.c_str() + bytes_sent,
+                            message.length() - bytes_sent, 0);
+        if (sent == -1) {
             WebServer::log("Failed to send response to the client", error);
             return;
         }
