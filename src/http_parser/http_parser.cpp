@@ -3,8 +3,6 @@
 
 HttpParser::HttpParser(const std::string &request) {
     request_ = request;
-    WebServer::log("Request: " + request_, info);
-
     size_t pos = request.find(' ');
     if (pos != std::string::npos)
         method_ = request.substr(0, pos);
