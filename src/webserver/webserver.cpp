@@ -16,16 +16,16 @@ bool WebServer::is_running = true;
 #pragma region Constructors &Destructors
 
 WebServer::WebServer() : epoll_fd_(-1), events_(), status_code_() {
-    log_file_.open("logs/webserv.log", std::ios::out | std::ios::trunc);
-    if (!log_file_)
-        throw std::runtime_error("Failed to open log file");
-    log("WebServer started", info);
+  log_file_.open("logs/webserv.log", std::ios::out | std::ios::trunc);
+  if (!log_file_)
+    throw std::runtime_error("Failed to open log file");
+  log("WebServer started", info);
 }
 
 WebServer::~WebServer() {
-    log_file_.close();
-    if (epoll_fd_ > 0)
-        close(epoll_fd_);
+  log_file_.close();
+  if (epoll_fd_ > 0)
+    close(epoll_fd_);
 }
 
 #pragma endregion
@@ -71,6 +71,11 @@ void WebServer::setup_server_sockets() {
         ss << it->get_socket();
         log("Server (" + ss.str() + ") is listening", info);
     }
+    insert_epoll(it->get_socket());
+    std::stringstream ss;
+    ss << it->get_socket();
+    log("Server (" + ss.str() + ") is listening", info);
+  }
 }
 
 void WebServer::insert_epoll(const int socket) const {
@@ -214,7 +219,17 @@ void WebServer::server_routine() {
             if (!strstr(e.what(), "[ERROR]"))
                 log(e.what(), debug);
         }
+        if (events_[i].events & EPOLLOUT)
+          log("EPOLLOUT", info);
+        if (events_[i].events & EPOLLERR)
+          log("EPOLLERR", warning);
+        if (events_[i].events & EPOLLHUP)
+          log("EPOLLHUP", warning);
+      }
+    } catch (...) {
+      exit(1);
     }
+  }
 }
 
 #pragma endregion
