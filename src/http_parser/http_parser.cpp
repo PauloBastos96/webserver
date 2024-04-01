@@ -1,29 +1,34 @@
 #include "http_parser.hpp"
+#include "webserver.hpp"
 
 HttpParser::HttpParser(const std::string &request) {
     request_ = request;
+    WebServer::log("Request: " + request_, info);
 
-    method_ = request.substr(0, request.find(' '));
+    size_t pos = request.find(' ');
+    if (pos != std::string::npos)
+        method_ = request.substr(0, pos);
+    else
+        WebServer::log("Invalid HTTP request: no method", error);
 
-    uri_ = request.substr(request.find(' ') + 1,
-                          request.find(' ', request.find(' ') + 1) -
-                              request.find(' ') - 1);
 
-    http_version_ =
-        request.substr(request.find("HTTP/") + 5,
-                       request.find("\r\n") - request.find("HTTP/") - 5);
+    size_t uri_start = pos + 1;
+    pos = request.find(' ', uri_start);
+    if (pos != std::string::npos)
+        uri_ = request.substr(uri_start, pos - uri_start);
+    else
+        WebServer::log("Invalid HTTP request: no URI", error);
 
-    host_ = request.substr(request.find("Host: ") + 6,
-                           request.find("\r\n", request.find("Host: ")) -
-                               request.find("Host: ") - 6);
+    size_t version_start = request.find("HTTP/", pos);
+    if (version_start != std::string::npos) {
+        size_t version_end = request.find("\r\n", version_start);
+        if (version_end != std::string::npos)
+            http_version_ = request.substr(version_start + 5, version_end - version_start - 5);
+        else
+            WebServer::log("Invalid HTTP request: no HTTP version", error);
+    } else
+        WebServer::log("Invalid HTTP request: no HTTP version", error);
 
-    accept_ = request.substr(request.find("Accept: ") + 8,
-                             request.find("\r\n", request.find("Accept: ")) -
-                                 request.find("Accept: ") - 8);
-    // Parse the request
-    // ...
-    // Extract the method, URI, and HTTP version
-    // ...
     // Extract the headers
     // ...
     // Extract the body

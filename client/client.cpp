@@ -22,7 +22,7 @@ int main(int ac, char **av) {
             return 1;
         }
         std::string server_ip = "127.0.0.1";
-        int server_port = 8080;
+        int server_port = i % 2 ? 8080 : 8081;
         sockaddr_in server_addr;
         server_addr.sin_family = AF_INET;
         server_addr.sin_addr.s_addr = inet_addr(server_ip.c_str());
@@ -32,7 +32,7 @@ int main(int ac, char **av) {
             std::cerr << "Connect failed" << std::endl;
             return 1;
         }
-        std::string message = "Hello, server!";
+        std::string message = "GET /index.html HTTP/1.1\r\n\r\n";
         if (send(sock, message.c_str(), message.size(), 0) < 0) {
             std::cerr << "Send failed" << std::endl;
             return 1;

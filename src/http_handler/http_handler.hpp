@@ -8,7 +8,7 @@ typedef struct stat Stat;
 
 class HttpHandler {
   public:
-    HttpHandler(const std::string &request, int client_fd,
+    HttpHandler(const std::string &request, int client_socket,
                 const Server &server);
 
     ~HttpHandler();
@@ -17,7 +17,7 @@ class HttpHandler {
 
   private:
     HttpParser request_;
-    int client_fd_;
+    int client_socket_;
     Server server_;
 
     void process_get();
