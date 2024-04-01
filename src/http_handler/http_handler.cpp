@@ -26,8 +26,19 @@ void HttpHandler::process_request() {
 /// @param content The content to send
 void HttpHandler::send_response(const std::string &response,
                                 const std::string &content) {
-    send(client_fd_, response.c_str(), response.length(), 0);
-    send(client_fd_, content.c_str(), content.length(), 0);
+    std::string message = response + content;
+    size_t bytes_sent = 0;
+
+    while (bytes_sent < message.length())
+    {
+        ssize_t sent = send(client_fd_, message.c_str() + bytes_sent, message.length() - bytes_sent, 0);
+        if (sent == -1)
+        {
+            WebServer::log("Failed to send response to the client", error);
+            return;
+        }
+        bytes_sent += sent;
+    }
 }
 
 /// @brief Process a GET request
@@ -80,8 +91,8 @@ std::string HttpHandler::response_builder(const std::string &status_code,
                                           const std::string &content_type,
                                           const std::string &content_length) {
     std::string response = "HTTP/1.1 " + status_code + " " + status_message +
-                           "\n" + "Content-Type: " + content_type + "\n" +
-                           "Content-Length:" + content_length + "\n\r\n";
+                           "\r\n" + "Content-Type: " + content_type + "\r\n" +
+                           "Content-Length:" + content_length + "\r\n\r\n";
     return (response);
 }
 
