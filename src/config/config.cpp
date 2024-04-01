@@ -1,9 +1,9 @@
 #include "config.hpp"
 #include "config.tpp"
-#include <iostream>
 #include "location.hpp"
 #include "server.hpp"
 #include <algorithm>
+#include <iostream>
 #include <webserver.hpp>
 
 #pragma region Constructors
@@ -11,9 +11,7 @@ Config::Config() {}
 
 Config::~Config() {}
 
-Config::Config(const Config &other) {
-    *this = other;
-}
+Config::Config(const Config &other) { *this = other; }
 
 Config &Config::operator=(const Config &other) {
     if (this == &other)
@@ -29,15 +27,12 @@ Config &Config::operator=(const Config &other) {
 
 #pragma region Setters
 
-void Config::set_root(const std::string &root) {
-    root_ = root;
-}
+void Config::set_root(const std::string &root) { root_ = root; }
 
-void Config::set_index(const std::string &index) {
-    index_.push_back(index);
-}
+void Config::set_index(const std::string &index) { index_.push_back(index); }
 
-void Config::set_error_page(const uint &error_code, const std::string &error_page) {
+void Config::set_error_page(const uint &error_code,
+                            const std::string &error_page) {
     error_page_.insert(std::pair<uint, std::string>(error_code, error_page));
 }
 
@@ -45,34 +40,25 @@ void Config::set_max_client_body_size(const std::string &max_client_body_size) {
     max_client_body_size_ = max_client_body_size;
 }
 
-void Config::set_auto_index(const bool &autoindex) {
-    auto_index_ = autoindex;
-}
+void Config::set_auto_index(const bool &autoindex) { auto_index_ = autoindex; }
 #pragma endregion
 
 #pragma region Getters
-const std::string &Config::get_root() {
-    return (root_);
-}
+const std::string &Config::get_root() { return (root_); }
 
-std::vector<std::string> &Config::get_index() {
-    return (index_);
-}
+std::vector<std::string> &Config::get_index() { return (index_); }
 
-std::map<uint, std::string> &Config::get_error_page() {
-    return (error_page_);
-}
+std::map<uint, std::string> &Config::get_error_page() { return (error_page_); }
 
 const std::string &Config::get_max_client_body_size() {
     return (max_client_body_size_);
 }
 
-const bool &Config::get_auto_index() const {
-    return (auto_index_);
-}
+const bool &Config::get_auto_index() const { return (auto_index_); }
 #pragma endregion
 
-/// @brief Parse the IP address from the line from the config file and set it to the server object
+/// @brief Parse the IP address from the line from the config file and set it to
+/// the server object
 /// @param line The line from the config file
 /// @param server The server object
 void Config::host(const std::string &line, Server &server) {
@@ -80,17 +66,23 @@ void Config::host(const std::string &line, Server &server) {
     size_t endPosition = line.size() - 1;
 
     if (line.size() > 0)
-        endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2 : line.size() - 1;
+        endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2
+                                                        : line.size() - 1;
     if (line.at(endPosition) != ';')
         WebServer::log(WARM_CFG_SEMICOLON, warning);
     if (line.find_first_of(':') != std::string::npos)
-        host = line.substr(line.find_first_of(' ') + 1, line.find_first_of(':') - line.find_first_of(' ') - 1);
+        host =
+            line.substr(line.find_first_of(' ') + 1,
+                        line.find_first_of(':') - line.find_first_of(' ') - 1);
     else
-        host = line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1);
+        host =
+            line.substr(line.find_first_of(' ') + 1,
+                        line.find_first_of(';') - line.find_first_of(' ') - 1);
     server.set_host(host);
 }
 
-/// @brief Parse the port from the line from the config file and set it to the server object
+/// @brief Parse the port from the line from the config file and set it to the
+/// server object
 /// @param line The line from the config file
 /// @param server The server object
 void Config::port(const std::string &line, Server &server) {
@@ -98,7 +90,8 @@ void Config::port(const std::string &line, Server &server) {
     size_t endPosition = line.size() - 1;
 
     if (line.size() > 0)
-        endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2 : line.size() - 1;
+        endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2
+                                                        : line.size() - 1;
     if (line.at(endPosition) != ';')
         WebServer::log(WARM_CFG_SEMICOLON, warning);
     if (line.find_first_of(':') != std::string::npos) {
@@ -114,7 +107,8 @@ void Config::port(const std::string &line, Server &server) {
     server.set_port(port);
 }
 
-/// @brief Parse location block from the config file and add it to the server object
+/// @brief Parse location block from the config file and add it to the server
+/// object
 /// @param line The line from the config file
 /// @param server The server object
 /// @param line_number The starting line number
@@ -122,19 +116,31 @@ void Config::port(const std::string &line, Server &server) {
 void Config::location(std::string line, Server &server, std::ifstream &file) {
     Location location;
     size_t endPosition;
-    location.set_path(line.substr(line.find_first_of(' ') + 1, line.find_last_of(' ') - line.find_first_of(' ') - 1));
-    while (std::getline(file, line) && !file.eof() && line.find('}') == std::string::npos) {
+    location.set_path(
+        line.substr(line.find_first_of(' ') + 1,
+                    line.find_last_of(' ') - line.find_first_of(' ') - 1));
+    while (std::getline(file, line) && !file.eof() &&
+           line.find('}') == std::string::npos) {
         if (line.size() > 0)
-            endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2 : line.size() - 1;
+            endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2
+                                                            : line.size() - 1;
         if (line.find("root") != std::string::npos)
-            location.get_config().set_root(line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1));
-        if (line.find("index") != std::string::npos && line.find("autoindex") == std::string::npos)
-            location.get_config().set_index(line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1));
+            location.get_config().set_root(line.substr(
+                line.find_first_of(' ') + 1,
+                line.find_first_of(';') - line.find_first_of(' ') - 1));
+        if (line.find("index") != std::string::npos &&
+            line.find("autoindex") == std::string::npos)
+            location.get_config().set_index(line.substr(
+                line.find_first_of(' ') + 1,
+                line.find_first_of(';') - line.find_first_of(' ') - 1));
         if (line.find("error_page") != std::string::npos)
             parse_error_page(line, location);
         if (line.find("max_client_body_size") != std::string::npos)
-            location.get_config().set_max_client_body_size(line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1));
-        if (line.find("location") != std::string::npos && line.at(endPosition) == '{')
+            location.get_config().set_max_client_body_size(line.substr(
+                line.find_first_of(' ') + 1,
+                line.find_first_of(';') - line.find_first_of(' ') - 1));
+        if (line.find("location") != std::string::npos &&
+            line.at(endPosition) == '{')
             WebServer::log(ERR_CFG_MISSING_BRACKET, error);
         if (line.find("limit_except") != std::string::npos)
             limit_except(line, location);
@@ -146,14 +152,16 @@ void Config::location(std::string line, Server &server, std::ifstream &file) {
     server.get_locations().push_back(location);
 }
 
-/// @brief Parse the limit_except block from the config file and add it to the location object
+/// @brief Parse the limit_except block from the config file and add it to the
+/// location object
 /// @param line The line from the config file
 /// @param location The location object
 void Config::limit_except(const std::string &line, Location &location) {
     std::stringstream ss(line);
     std::string word;
     while (ss >> word) {
-        if (word != "limit_except" && word.find_first_of('{') == std::string::npos)
+        if (word != "limit_except" &&
+            word.find_first_of('{') == std::string::npos)
             location.set_allowed_methods(word);
     }
 }
@@ -164,33 +172,39 @@ void Config::check_semicolon(const std::string &line) {
     if (line.size() == 0)
         return;
     size_t endPosition = line.size() - 1;
-    
+
     if (line.size() > 2)
-        endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2 : line.size() - 1;
-    if (line.at(endPosition) != '{' && line.at(endPosition) != '}' && line.at(endPosition) != ';' && line.at(endPosition) != '\r')
+        endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2
+                                                        : line.size() - 1;
+    if (line.at(endPosition) != '{' && line.at(endPosition) != '}' &&
+        line.at(endPosition) != ';' && line.at(endPosition) != '\r')
         WebServer::log(WARM_CFG_SEMICOLON, warning);
 }
-
-
 
 /// @brief Parse the config file and create server objects
 /// @param path The path to the config file
 /// @param servers The vector of server objects
-void Config::parse_config_file(const std::string &path, std::vector<Server> &servers) {
+void Config::parse_config_file(const std::string &path,
+                               std::vector<Server> &servers) {
     std::ifstream file(path.c_str());
     if (!file.is_open())
         WebServer::log(ERR_CANT_OPEN_FILE + path, error);
     std::string line;
     size_t endPosition = 0;
     while (std::getline(file, line) && !file.eof()) {
-         if (line.size() >= 2)
-            endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2 : line.size() - 1;
-        if (line.size() >= 2 && line.find("server") != std::string::npos && line.at(endPosition) == '{') {
+        if (line.size() >= 2)
+            endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2
+                                                            : line.size() - 1;
+        if (line.size() >= 2 && line.find("server") != std::string::npos &&
+            line.at(endPosition) == '{') {
             Server server;
-            while (std::getline(file, line) && !file.eof() && line.find('}') == std::string::npos) {
+            while (std::getline(file, line) && !file.eof() &&
+                   line.find('}') == std::string::npos) {
                 Config::check_semicolon(line);
-                 if (line.size() >= 2)
-                    endPosition = IS_CRLF(line.at(line.size() - 1)) ? line.size() - 2 : line.size() - 1;
+                if (line.size() >= 2)
+                    endPosition = IS_CRLF(line.at(line.size() - 1))
+                                      ? line.size() - 2
+                                      : line.size() - 1;
                 if (line.find("listen") != std::string::npos) {
                     if (std::count(line.begin(), line.end(), ':') > 1)
                         WebServer::log(ERR_CFG_LISTEN, error);
@@ -199,28 +213,36 @@ void Config::parse_config_file(const std::string &path, std::vector<Server> &ser
                 }
                 if (line.find("server_name") != std::string::npos)
                     multi_value(line, server, std::string("server_name"));
-                if (line.find("root") != std::string::npos)
-                {
+                if (line.find("root") != std::string::npos) {
                     if (line.find_first_of(' ') != std::string::npos)
-                        server.get_config().set_root(line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1));
+                        server.get_config().set_root(
+                            line.substr(line.find_first_of(' ') + 1,
+                                        line.find_first_of(';') -
+                                            line.find_first_of(' ') - 1));
                 }
-                if (line.find("index") != std::string::npos && line.find("autoindex") == std::string::npos)
+                if (line.find("index") != std::string::npos &&
+                    line.find("autoindex") == std::string::npos)
                     multi_value(line, server, "index");
                 if (line.find("error_page") != std::string::npos)
                     parse_error_page(line, server);
                 if (line.find("max_client_body_size") != std::string::npos)
-                    server.get_config().set_max_client_body_size(line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1));
-                if (line.find("location") != std::string::npos){
+                    server.get_config().set_max_client_body_size(line.substr(
+                        line.find_first_of(' ') + 1,
+                        line.find_first_of(';') - line.find_first_of(' ') - 1));
+                if (line.find("location") != std::string::npos) {
                     if (line.at(endPosition) == '{')
                         location(line, server, file);
                     else
                         WebServer::log(ERR_CFG_MISSING_BRACKET, error);
                 }
                 if (line.find("autoindex") != std::string::npos) {
-                    std::string autoindex = line.substr(line.find_first_of(' ') + 1, line.find_first_of(';') - line.find_first_of(' ') - 1);
+                    std::string autoindex = line.substr(
+                        line.find_first_of(' ') + 1,
+                        line.find_first_of(';') - line.find_first_of(' ') - 1);
                     server.get_config().set_auto_index(autoindex != "off");
                 }
-                if (line.find("server") != std::string::npos && line.at(endPosition) == '{')
+                if (line.find("server") != std::string::npos &&
+                    line.at(endPosition) == '{')
                     WebServer::log(ERR_CFG_MISSING_BRACKET, error);
             }
             if (line.find('}') == std::string::npos) {
@@ -234,53 +256,95 @@ void Config::parse_config_file(const std::string &path, std::vector<Server> &ser
 
 void Config::display_configs(std::vector<Server> &servers) {
     for (size_t i = 0; i < servers.size(); i++) {
-        std::cout << BLUE << "Host " << servers[i].get_host() << ":" << servers[i].get_port() << RESET << std::endl;
+        std::cout << BLUE << "Host " << servers[i].get_host() << ":"
+                  << servers[i].get_port() << RESET << std::endl;
         std::cout << "Server name: ";
         for (size_t j = 0; j < servers[i].get_server_name().size(); j++) {
             std::cout << servers[i].get_server_name()[j] << " ";
         }
         std::cout << std::endl;
-        std::cout << "Root: " << servers[i].get_config().get_root() << std::endl;
+        std::cout << "Root: " << servers[i].get_config().get_root()
+                  << std::endl;
         std::cout << "Index: ";
-        for (size_t j = 0; j < servers[i].get_config().get_index().size(); j++) {
+        for (size_t j = 0; j < servers[i].get_config().get_index().size();
+             j++) {
             std::cout << servers[i].get_config().get_index()[j] << " ";
         }
         std::cout << std::endl;
         std::cout << "Error pages: ";
-        for (std::map<uint, std::string>::iterator it = servers[i].get_config().get_error_page().begin();
+        for (std::map<uint, std::string>::iterator it =
+                 servers[i].get_config().get_error_page().begin();
              it != servers[i].get_config().get_error_page().end(); it++) {
             std::cout << it->first << "=>" << it->second << " ";
         }
         std::cout << std::endl;
-        std::cout << "Max client body size: " << servers[i].get_config().get_max_client_body_size() << std::endl;
-        std::cout << "Autoindex: " << (servers[i].get_config().get_auto_index() ? "on" : "off") << std::endl;
+        std::cout << "Max client body size: "
+                  << servers[i].get_config().get_max_client_body_size()
+                  << std::endl;
+        std::cout << "Autoindex: "
+                  << (servers[i].get_config().get_auto_index() ? "on" : "off")
+                  << std::endl;
         std::cout << "Locations: " << std::endl;
         for (size_t j = 0; j < servers[i].get_locations().size(); j++) {
-            std::cout << "	" << servers[i].get_locations()[j].get_path() << std::endl;
-            std::cout << "	" << "Root: " << servers[i].get_locations()[j].get_config().get_root() << std::endl;
-            std::cout << "	" << "Index: ";
-            for (size_t k = 0; k < servers[i].get_locations()[j].get_config().get_index().size(); k++) {
-                std::cout << servers[i].get_locations()[j].get_config().get_index()[k];
+            std::cout << "	" << servers[i].get_locations()[j].get_path()
+                      << std::endl;
+            std::cout << "	"
+                      << "Root: "
+                      << servers[i].get_locations()[j].get_config().get_root()
+                      << std::endl;
+            std::cout << "	"
+                      << "Index: ";
+            for (size_t k = 0;
+                 k <
+                 servers[i].get_locations()[j].get_config().get_index().size();
+                 k++) {
+                std::cout << servers[i]
+                                 .get_locations()[j]
+                                 .get_config()
+                                 .get_index()[k];
             }
             std::cout << std::endl;
-            std::cout << "	" << "Error pages: ";
-            for (std::map<uint, std::string>::iterator it = servers[i].get_locations()[j].get_config().get_error_page().
-                         begin();
-                 it != servers[i].get_locations()[j].get_config().get_error_page().end(); it++) {
+            std::cout << "	"
+                      << "Error pages: ";
+            for (std::map<uint, std::string>::iterator it =
+                     servers[i]
+                         .get_locations()[j]
+                         .get_config()
+                         .get_error_page()
+                         .begin();
+                 it != servers[i]
+                           .get_locations()[j]
+                           .get_config()
+                           .get_error_page()
+                           .end();
+                 it++) {
                 std::cout << "	" << it->first << " " << it->second << " ";
             }
             std::cout << std::endl;
-            std::cout << "	" << "Max client body size: " << servers[i].get_locations()[j].get_config().
-                    get_max_client_body_size()
-                    << std::endl;
-            std::cout << "	" << "Allowed methods: ";
-            for (size_t k = 0; k < servers[i].get_locations()[j].get_allowed_methods().size(); k++) {
-                std::cout << servers[i].get_locations()[j].get_allowed_methods()[k] << " ";
+            std::cout << "	"
+                      << "Max client body size: "
+                      << servers[i]
+                             .get_locations()[j]
+                             .get_config()
+                             .get_max_client_body_size()
+                      << std::endl;
+            std::cout << "	"
+                      << "Allowed methods: ";
+            for (size_t k = 0;
+                 k < servers[i].get_locations()[j].get_allowed_methods().size();
+                 k++) {
+                std::cout
+                    << servers[i].get_locations()[j].get_allowed_methods()[k]
+                    << " ";
             }
             std::cout << std::endl;
-            std::cout << "	" << "Autoindex: " << (
-                        servers[i].get_locations()[j].get_config().get_auto_index() ? "on" : "off") <<
-                    std::endl;
+            std::cout
+                << "	"
+                << "Autoindex: "
+                << (servers[i].get_locations()[j].get_config().get_auto_index()
+                        ? "on"
+                        : "off")
+                << std::endl;
             std::cout << std::endl;
         }
     }

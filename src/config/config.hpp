@@ -1,24 +1,25 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
-#include <string>
-#include <fstream>
-#include <vector>
-#include <sstream>
 #include <cstdlib>
+#include <fstream>
 #include <map>
+#include <sstream>
+#include <string>
+#include <vector>
 
 class Server;
 class Location;
 
-//End of line check
+// End of line check
 #define IS_CRLF(c) (c == '\r')
 
 class Config {
-public:
+  public:
 #pragma region File Parser
 
-    static void parse_config_file(const std::string &path, std::vector<Server> &servers);
+    static void parse_config_file(const std::string &path,
+                                  std::vector<Server> &servers);
 
     static void display_configs(std::vector<Server> &servers);
 
@@ -33,7 +34,7 @@ public:
     static void check_semicolon(const std::string &line);
 #pragma endregion
 
-#pragma region Constructors & Destructors
+#pragma region Constructors &Destructors
 
     Config();
 
@@ -73,7 +74,7 @@ public:
 
 #pragma endregion
 
-private:
+  private:
     std::string root_;
     std::vector<std::string> index_;
     std::map<uint, std::string> error_page_;

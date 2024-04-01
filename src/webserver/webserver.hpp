@@ -9,69 +9,51 @@
 #define MAX_EVENTS 10
 #define BUFFER_SIZE 10000
 
-#pragma region Forward Declarations
-
-struct Request {
-  std::string method;
-  std::string uri;
-  std::string http_version;
-  std::map<std::string, std::string> headers;
-  std::string body;
-};
-
-#pragma endregion
-
 class WebServer {
-public:
-#pragma region Constructors & Destructors
-  WebServer();
+  public:
+#pragma region Constructors &Destructors
+    WebServer();
 
-  ~WebServer();
+    ~WebServer();
 #pragma endregion
 
 #pragma region Getters
-  std::vector<Server> &get_servers();
+    std::vector<Server> &get_servers();
 #pragma endregion
 
 #pragma region Logger
-  static void log(const std::string &message, int log_level);
+    static void log(const std::string &message, int log_level);
 #pragma endregion
 
 #pragma region Setup
-  static bool is_running;
+    static bool is_running;
 
-  void setup_sockets();
+    void setup_server_sockets();
 
-  void setup_epoll();
-
-  void insert_epoll(int socket_fd) const;
+    void insert_epoll(int socket_fd) const;
 #pragma endregion
 
 #pragma region Connection Handling
-  void server_routine();
+    void server_routine();
 
-  void setup_servers();
+    std::vector<Server>::iterator find_server(int fd);
 
-  void accept_connection();
+    bool is_server(int fd);
 
-  bool is_server_socket();
+    void accept_connection(Server &server, int fd) const;
 
-  void handle_connection();
+    void handle_connection(Server &server, int fd) const;
 
-  void end_connection() const;
-
-  void parse_http_request(const std::string &data_received);
+    void end_connection(Server &server, int fd) const;
 
 #pragma endregion
 
-private:
-  std::vector<Server> servers_;
-  static std::ofstream log_file_;
-  int epoll_fd_;
-  epoll_event events_[MAX_EVENTS];
-  int server_number_;
-  int status_code_;
-  Request request_;
+  private:
+    std::vector<Server> servers_;
+    static std::ofstream log_file_;
+    int epoll_fd_;
+    epoll_event events_[MAX_EVENTS];
+    int status_code_;
 };
 
 #endif
