@@ -15,6 +15,7 @@ class HttpParser {
     // Request header
     std::string host_;
     std::string accept_;
+    std::string body_;
 
   public:
     HttpParser(const std::string &request);
@@ -25,6 +26,7 @@ class HttpParser {
     std::string get_http_version() const;
     std::string get_host() const;
     std::string get_accept() const;
+    std::string get_body() const;
 };
 
 #endif

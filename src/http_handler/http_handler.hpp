@@ -16,14 +16,13 @@ class HttpHandler {
 
   private:
     HttpParser request_;
-    int client_socket_;
     Server *server_;
 
     const std::string process_get();
 
-    void process_post();
+    const std::string process_post();
 
-    void process_delete();
+    const std::string process_delete();
 
     std::string response_builder(const std::string &status_code,
                                  const std::string &status_message,
@@ -33,6 +32,8 @@ class HttpHandler {
     std::string read_file(const std::string &file_path);
 
     std::string get_content_type(const std::string &file_path);
+
+    std::string get_error_page(const int status_code);
 
     bool is_text_file(const std::string &file_path);
 };
