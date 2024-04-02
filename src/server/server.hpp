@@ -7,6 +7,7 @@
 #include <vector>
 
 class Location;
+
 class Config;
 
 class Server {
@@ -16,6 +17,12 @@ class Server {
     Server();
 
     ~Server();
+
+#pragma endregion
+
+#pragma region Operator Overload
+
+    Server &operator=(const Server &server);
 
 #pragma endregion
 

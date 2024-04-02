@@ -6,45 +6,26 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-HttpHandler::HttpHandler(const std::string &request, const int client_socket,
-                         const Server &server)
-    : request_(request), client_socket_(client_socket), server_(server) {}
+HttpHandler::HttpHandler(const std::string &request, Server &server)
+    : request_(request), server_(&server) {}
 
 HttpHandler::~HttpHandler() {}
 
 /// @brief Process the request
-void HttpHandler::process_request() {
+const std::string HttpHandler::process_request() {
     if (request_.get_method() == "GET")
-        process_get();
+        return process_get();
     else if (request_.get_method() == "POST")
         process_post();
     else if (request_.get_method() == "DELETE")
         process_delete();
     else
         WebServer::log("Unsupported method", warning);
-}
-
-/// @brief Send the response to the client
-/// @param response The response header to send
-/// @param content The content to send
-void HttpHandler::send_response(const std::string &response,
-                                const std::string &content) {
-    std::string message = response + content;
-    size_t bytes_sent = 0;
-
-    while (bytes_sent < message.length()) {
-        ssize_t sent = send(client_socket_, message.c_str() + bytes_sent,
-                            message.length() - bytes_sent, 0);
-        if (sent == -1) {
-            WebServer::log("Failed to send response to the client", error);
-            return;
-        }
-        bytes_sent += sent;
-    }
+    return "";
 }
 
 /// @brief Process a GET request
-void HttpHandler::process_get() {
+const std::string HttpHandler::process_get() {
     std::fstream file;
     std::string content;
     std::string file_path;
@@ -53,28 +34,28 @@ void HttpHandler::process_get() {
 
     try {
         if (request_.get_uri() == "/") {
-            for (size_t i = 0; i < server_.get_config().get_index().size();
+            for (size_t i = 0; i < server_->get_config().get_index().size();
                  i++) {
-                file_path = server_.get_config().get_root() + "/" +
-                            server_.get_config().get_index().at(i);
+                file_path = server_->get_config().get_root() + "/" +
+                            server_->get_config().get_index().at(i);
                 if (stat(file_path.c_str(), &buffer) == 0)
                     break;
             }
         } else
             file_path =
-                server_.get_config().get_root() + "/" + request_.get_uri();
+                server_->get_config().get_root() + "/" + request_.get_uri();
         content = read_file(file_path);
         ss << content.length();
         std::string response = response_builder(
             "200", "OK", get_content_type(file_path), ss.str());
-        send_response(response, content);
+        return response + content;
         WebServer::log(std::string(HTTP_200) + request_.get_uri(), info);
     } catch (const std::runtime_error &e) {
         content = read_file("default_pages/not_found.html");
         ss << content.length();
         std::string response =
             response_builder("404", "Not Found", "text/html", ss.str());
-        send_response(response, content);
+        return response + content;
         WebServer::log(std::string(HTTP_404) + request_.get_uri(), warning);
     }
 }

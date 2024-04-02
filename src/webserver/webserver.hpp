@@ -40,9 +40,11 @@ class WebServer {
 
     bool is_server(int socket);
 
+    void send_response(int socket, std::string &response) const;
+
     void accept_connection(Server &server, int socket) const;
 
-    void handle_connection(Server &server, int fd) const;
+    std::string handle_connection(Server &server, int socket) const;
 
     void end_connection(Server &server, int socket) const;
 
@@ -53,7 +55,6 @@ class WebServer {
     static std::ofstream log_file_;
     int epoll_fd_;
     epoll_event events_[MAX_EVENTS];
-    int status_code_;
 };
 
 #endif

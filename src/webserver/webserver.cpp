@@ -15,7 +15,7 @@ bool WebServer::is_running = true;
 
 #pragma region Constructors &Destructors
 
-WebServer::WebServer() : epoll_fd_(-1), events_(), status_code_() {
+WebServer::WebServer() : epoll_fd_(-1), events_() {
     log_file_.open("logs/webserv.log", std::ios::out | std::ios::trunc);
     if (!log_file_)
         throw std::runtime_error("Failed to open log file");
@@ -51,6 +51,10 @@ void WebServer::setup_server_sockets() {
         if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &option_value,
                        sizeof(option_value)) == -1)
             log("Failed to set server socket options", warning);
+        const int flags = fcntl(server_socket, F_GETFL, 0);
+        if (flags == -1 ||
+            fcntl(server_socket, F_SETFL, flags | O_NONBLOCK) == -1)
+            log("Failed to set server socket to non-blocking mode", warning);
         sockaddr_in address = {};
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;
@@ -58,10 +62,6 @@ void WebServer::setup_server_sockets() {
         if (bind(server_socket, reinterpret_cast<sockaddr *>(&address),
                  sizeof(address)))
             log("Failed to bind the server socket", warning);
-        const int flags = fcntl(server_socket, F_GETFL, 0);
-        if (flags == -1 ||
-            fcntl(server_socket, F_SETFL, flags | O_NONBLOCK) == -1)
-            log("Failed to set server socket to non-blocking mode", warning);
         if (listen(server_socket, 10))
             log("Failed to listen on the server socket", warning);
         it->set_socket(server_socket);
@@ -74,7 +74,7 @@ void WebServer::setup_server_sockets() {
 
 void WebServer::insert_epoll(const int socket) const {
     epoll_event event = {};
-    event.events = EPOLLIN | EPOLLET;
+    event.events = EPOLLIN | EPOLLOUT | EPOLLET;
     event.data.fd = socket;
     if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, socket, &event) == -1)
         log("Failed to add file descriptor to epoll", error);
@@ -107,6 +107,20 @@ std::vector<Server>::iterator WebServer::find_server(const int fd) {
     return servers_.end();
 }
 
+void WebServer::send_response(const int socket, std::string &response) const {
+    if (response.empty())
+        return;
+    size_t bytes_sent = 0;
+    while (bytes_sent < response.length()) {
+        ssize_t sent = send(socket, response.c_str() + bytes_sent,
+                            response.length() - bytes_sent, 0);
+        if (sent == -1)
+            WebServer::log("Failed to send response to the client", error);
+        bytes_sent += sent;
+    }
+    response.clear();
+}
+
 void WebServer::accept_connection(Server &server, const int socket) const {
     sockaddr_in address = {};
     socklen_t address_length = sizeof(address);
@@ -123,8 +137,10 @@ void WebServer::accept_connection(Server &server, const int socket) const {
     log("Connection accepted", info);
 }
 
-void WebServer::handle_connection(Server &server, const int socket) const {
+std::string WebServer::handle_connection(Server &server,
+                                         const int socket) const {
     log("Handling connection", info);
+    std::string response;
     char buffer[BUFFER_SIZE];
     const ssize_t bytes_received = recv(socket, buffer, BUFFER_SIZE, 0);
     if (!bytes_received || bytes_received == -1) {
@@ -132,34 +148,12 @@ void WebServer::handle_connection(Server &server, const int socket) const {
         log(!bytes_received ? "Client disconnected"
                             : "Failed to receive data from the client",
             info);
-        return;
+        return response;
     }
+
     const std::string data_received(buffer);
-    HttpHandler http_handler(data_received, socket, server);
-    http_handler.process_request();
-
-    //    std::string response = (server.get_port() == 8080)
-    //                               ? "HTTP/1.1 200 OK\r\n"
-    //                                 "Content-Type: text/plain\r\n"
-    //                                 "Content-Length: 12\r\n\r\n"
-    //                                 "Hello, World!"
-    //                               : "HTTP/1.1 200 OK\r\n"
-    //                                 "Content-Type: text/plain\r\n"
-    //                                 "Content-Length: 12\r\n\r\n"
-    //                                 "World, Hello!";
-    //    if (send(socket, response.c_str(), response.length(), 0) == -1)
-    //        log("Failed to send test HTTP response", warning);
-
-    //    std::string large_packet(1024 * 1024, 'A');
-    //    std::ostringstream oss;
-    //    oss << large_packet.length();
-    //    std::string response = "HTTP/1.1 200 OK\r\n"
-    //                           "Content-Type: text/plain\r\n"
-    //                           "Content-Length: " + oss.str() + "\r\n\r\n" +
-    //                           large_packet;
-    //
-    //    if (send(socket, response.c_str(), response.length(), 0) == -1)
-    //        log("Failed to send large packet", warning);
+    HttpHandler http_handler(data_received, server);
+    return http_handler.process_request();
 }
 
 void WebServer::end_connection(Server &server, int socket) const {
@@ -179,6 +173,7 @@ void WebServer::end_connection(Server &server, int socket) const {
 
 void WebServer::server_routine() {
     setup_server_sockets();
+    std::string response;
     while (is_running) {
         try {
             const int num_events =
@@ -194,11 +189,13 @@ void WebServer::server_routine() {
                         log("Failed to find server", error);
                         continue;
                     }
-                    is_server(socket) ? accept_connection(*server_it, socket)
-                                      : handle_connection(*server_it, socket);
+                    if (is_server(socket))
+                        accept_connection(*server_it, socket);
+                    else
+                        response = handle_connection(*server_it, socket);
                 }
                 if (events_[i].events & EPOLLOUT)
-                    log("EPOLLOUT", info);
+                    send_response(socket, response);
                 if (events_[i].events & EPOLLERR ||
                     events_[i].events & EPOLLHUP) {
                     const std::vector<Server>::iterator server_it =
