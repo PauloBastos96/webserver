@@ -7,8 +7,8 @@
 class Config;
 
 class Location {
-public:
-#pragma region Constructors & Destructors
+  public:
+#pragma region Constructors &Destructors
 
     Location();
 
@@ -34,7 +34,7 @@ public:
 
 #pragma endregion
 
-private:
+  private:
     std::string path_;
     Config config_;
     std::vector<std::string> allowed_methods_;

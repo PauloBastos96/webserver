@@ -4,31 +4,38 @@
 #include "http_parser.hpp"
 #include "server.hpp"
 
+typedef struct stat Stat;
+
 class HttpHandler {
-public:
-  HttpHandler(const std::string &request, const int client_fd,
-              std::vector<Server> &server);
-  ~HttpHandler(void);
+  public:
+    HttpHandler(const std::string &request, Server &server);
 
-  void processRequest(void);
+    ~HttpHandler();
 
-private:
-  HttpParser request_;
-  int client_fd_;
-  Server server_;
+    const std::string process_request();
 
-  void processGet(void);
-  void processPost(void);
-  void processDelete(void);
+  private:
+    HttpParser request_;
+    Server *server_;
 
-  std::string responseBuilder(std::string status_code,
-                              std::string status_message,
-                              std::string content_type,
-                              std::string content_length = "0");
-  void sendResponse(const std::string &response, const std::string &content);
-  std::string readFile(const std::string &file_path);
-  std::string getContentType(const std::string &file_path);
-  bool isTextFile(const std::string &file_path);
+    const std::string process_get();
+
+    const std::string process_post();
+
+    const std::string process_delete();
+
+    std::string response_builder(const std::string &status_code,
+                                 const std::string &status_message,
+                                 const std::string &content_type,
+                                 const std::string &content_length = "0");
+
+    std::string read_file(const std::string &file_path);
+
+    std::string get_content_type(const std::string &file_path);
+
+    std::string get_error_page(const int status_code);
+
+    bool is_text_file(const std::string &file_path);
 };
 
 #endif
