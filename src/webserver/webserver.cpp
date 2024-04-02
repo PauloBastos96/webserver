@@ -160,8 +160,6 @@ void WebServer::end_connection(Server &server, int socket) const {
     ss << socket;
     if (epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, socket, NULL) == -1)
         log("Failed to remove socket " + ss.str() + " from the epoll", error);
-    else
-        log("Removed socket " + ss.str() + " from the epoll", info);
     close(socket);
     const std::vector<int>::iterator client_it =
         std::find(server.get_connected_clients().begin(),

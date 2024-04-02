@@ -30,6 +30,12 @@ std::string HttpHandler::get_error_page(const int status_code) {
 
   try {
     switch (status_code) {
+    case 403:
+      content = read_file("default_pages/forbidden.html");
+      ss << content.length();
+      WebServer::log(std::string(HTTP_403) + request_.get_uri(), warning);
+      return response_builder("403", "Forbidden", "text/html", ss.str()) +
+             content;
     case 404:
       content = read_file("default_pages/not_found.html");
       ss << content.length();
@@ -95,11 +101,17 @@ const std::string HttpHandler::process_post() {
 }
 
 const std::string HttpHandler::process_delete() {
-    std::cout << "DELETE request:" << std::endl;
-    std::string response = "Deleted" + request_.get_uri();
-    std::stringstream ss;
-    ss << response.length();
-    return response_builder("200", "OK", "text/plain", ss.str()) + response;
+    std::string file_path;
+    Stat buffer;
+
+    file_path = server_->get_config().get_root() + request_.get_uri();
+    if (stat(file_path.c_str(), &buffer) != 0)
+        return get_error_page(404);
+    if (!(buffer.st_mode & S_IWOTH))
+        return get_error_page(403);
+    if (std::remove(file_path.c_str()))
+        return get_error_page(403);
+    return response_builder("204", "No Content", "text/plain", "0");
 }
 
 /// @brief Build the response header
