@@ -47,5 +47,7 @@ enum log_level {
 
 #define HTTP_200 "[200] OK |   URI:"
 #define HTTP_404 "[404] Not Found  |   URI:"
+#define HTTP_501 "[501] Not Implemented  |   URI:"
+#define HTTP_500 "[500] Internal Server Error  |   URI:"
 
 #endif

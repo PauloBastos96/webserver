@@ -139,7 +139,6 @@ void WebServer::accept_connection(Server &server, const int socket) const {
 
 std::string WebServer::handle_connection(Server &server,
                                          const int socket) const {
-    log("Handling connection", info);
     std::string response;
     char buffer[BUFFER_SIZE];
     const ssize_t bytes_received = recv(socket, buffer, BUFFER_SIZE, 0);
