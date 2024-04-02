@@ -24,6 +24,9 @@ const std::string HttpHandler::process_request() {
   return "";
 }
 
+/// @brief Get the error page
+/// @param status_code The status code
+/// @return The error page content
 std::string HttpHandler::get_error_page(const int status_code) {
   std::string content;
   std::stringstream ss;
@@ -100,6 +103,7 @@ const std::string HttpHandler::process_post() {
     return response_builder("201", "Created", "text/plain", ss.str()) + response;
 }
 
+/// @brief Process a DELETE request
 const std::string HttpHandler::process_delete() {
     std::string file_path;
     Stat buffer;

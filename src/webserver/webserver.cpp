@@ -208,6 +208,13 @@ void WebServer::server_routine() {
                 log(e.what(), debug);
         }
     }
+    for (std::vector<Server>::iterator server_it = servers_.begin(); server_it != servers_.end(); server_it++) {
+        for (std::vector<int>::iterator client_it = server_it->get_connected_clients().begin(); client_it != server_it->get_connected_clients().end(); client_it++) {
+            close(*client_it);
+        }
+        close(server_it->get_socket());
+    }
+    close(epoll_fd_);
 }
 
 #pragma endregion

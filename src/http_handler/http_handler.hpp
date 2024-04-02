@@ -16,7 +16,6 @@ class HttpHandler {
 
   private:
     HttpParser request_;
-    //int client_socket_;
     Server *server_;
 
     const std::string process_get();
