@@ -1,7 +1,7 @@
 
 body {
 	font-family: Arial, sans-serif;
-	margin: 0;
+	margin: 20px;
 	padding: 0;
 	background-color: #1a1a1a;
 }
@@ -14,6 +14,35 @@ p {
 	text-align: center;
 	margin-top: 20px;
 	color: #dad7ff;
+}
+
+table {
+	color: #ebebeb;
+}
+
+th {
+	color: #dadff7;
+}
+
+td {
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+a:link {
+	color: #b5d5f3;
+}
+
+a:visited {
+	color: #c3ade6;
+}
+
+a:hover {
+	color: white;
+}
+
+#autoindex {
+	text-align: left;
 }
 
 #error {
