@@ -16,9 +16,10 @@ p {
 	color: #dad7ff;
 }
 
-#not-found {
+#error {
 	text-align: center;
 	margin-top: 20px;
+	font-weight: bold;
 	color: rgb(150, 0, 0);
 }
 

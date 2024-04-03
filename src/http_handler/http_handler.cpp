@@ -45,6 +45,13 @@ std::string HttpHandler::get_error_page(const int status_code) {
       WebServer::log(std::string(HTTP_404) + request_.get_uri(), warning);
       return response_builder("404", "Not Found", "text/html", ss.str()) +
              content;
+    case 413:
+      content = read_file("default_pages/content_too_large.html");
+      ss << content.length();
+      WebServer::log(std::string(HTTP_413) + request_.get_uri(), warning);
+      return response_builder("413", "Content Too Large", "text/html",
+                              ss.str()) +
+             content;
     case 501:
       content = read_file("default_pages/not_implemented.html");
       ss << content.length();
@@ -60,7 +67,9 @@ std::string HttpHandler::get_error_page(const int status_code) {
              content;
     }
   } catch (...) {
-    return response_builder("500", "Internal Server Error", "text/plain", "23") + " Internal Server Error";
+    return response_builder("500", "Internal Server Error", "text/plain",
+                            "23") +
+           " Internal Server Error";
   }
 }
 
@@ -93,29 +102,60 @@ const std::string HttpHandler::process_get() {
   }
 }
 
+/// @brief Get the maximum size of the client body
+/// @param max_size The maximum size set in the configuration file
+/// @return The maximum size of the client body in bytes
+size_t HttpHandler::get_max_size(const std::string &max_size) {
+  size_t size = 0;
+  char unit;
+
+  if (isalpha(*(max_size.end() - 1)))
+    unit = std::tolower(*(max_size.end() - 1));
+  else
+    unit = 'b';
+  switch (unit) {
+  case 'k':
+    size = std::atoi(max_size.c_str()) * 1024;
+    break;
+  case 'm':
+    size = std::atoi(max_size.c_str()) * 1024 * 1024;
+    break;
+  case 'g':
+    size = std::atoi(max_size.c_str()) * 1024 * 1024 * 1024;
+    break;
+  default:
+    size = std::atoi(max_size.c_str());
+    break;
+  }
+  return size;
+}
+
 /// @brief Process a POST request
 const std::string HttpHandler::process_post() {
-    std::cout << "POST request:" << std::endl;
-    std::cout << request_.get_body() << std::endl;
-    std::string response = "Received" + request_.get_body();
-    std::stringstream ss;
-    ss << response.length();
-    return response_builder("201", "Created", "text/plain", ss.str()) + response;
+  size_t max_size =
+      get_max_size(server_->get_config().get_max_client_body_size());
+  std::cout << request_.get_request() << std::endl;
+  if (request_.get_body().size() > max_size)
+    return get_error_page(413);
+  std::string response = "Received" + request_.get_body();
+  std::stringstream ss;
+  ss << response.length();
+  return response_builder("201", "Created", "text/plain", ss.str()) + response;
 }
 
 /// @brief Process a DELETE request
 const std::string HttpHandler::process_delete() {
-    std::string file_path;
-    Stat buffer;
+  std::string file_path;
+  Stat buffer;
 
-    file_path = server_->get_config().get_root() + request_.get_uri();
-    if (stat(file_path.c_str(), &buffer) != 0)
-        return get_error_page(404);
-    if (!(buffer.st_mode & S_IWOTH))
-        return get_error_page(403);
-    if (std::remove(file_path.c_str()))
-        return get_error_page(403);
-    return response_builder("204", "No Content", "text/plain", "0");
+  file_path = server_->get_config().get_root() + request_.get_uri();
+  if (stat(file_path.c_str(), &buffer) != 0)
+    return get_error_page(404);
+  if (!(buffer.st_mode & S_IWOTH))
+    return get_error_page(403);
+  if (std::remove(file_path.c_str()))
+    return get_error_page(403);
+  return response_builder("204", "No Content", "text/plain", "0");
 }
 
 /// @brief Build the response header
