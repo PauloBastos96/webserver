@@ -12,27 +12,45 @@ HttpHandler::HttpHandler(const std::string &request, Server &server)
 
 HttpHandler::~HttpHandler() {}
 
-bool HttpHandler::is_valid_but_not_supported(const std::string &method) {
-    return (method == "PUT" || method == "PATCH" || method == "TRACE" ||
-            method == "CONNECT" || method == "OPTIONS" || method == "HEAD");
-}
 
 #pragma region HTTP Methods
 
+/// @brief Check if the method is a valid HTTP method but not supported
+/// @param method The method to check
+/// @return True if the method is valid but not supported, false otherwise
+bool HttpHandler::is_valid_but_not_supported(const std::string &method) {
+  return (method == "PUT" || method == "PATCH" || method == "TRACE" ||
+          method == "CONNECT" || method == "OPTIONS" || method == "HEAD");
+}
+
 /// @brief Process the request
 const std::string HttpHandler::process_request() {
-    if (request_.get_method() == "GET")
-        return process_get();
-    else if (request_.get_method() == "POST")
-        return process_post();
-    else if (request_.get_method() == "DELETE")
-        return process_delete();
-    else if (is_valid_but_not_supported(request_.get_method()))
-        return get_error_page(501);
-    else
-        return get_error_page(400);
-    return "";
+  if (request_.get_method() == "GET")
+    return process_get();
+  else if (request_.get_method() == "POST")
+    return process_post();
+  else if (request_.get_method() == "DELETE")
+    return process_delete();
+  else if (is_valid_but_not_supported(request_.get_method()))
+    return get_error_page(501);
+  else
+    return get_error_page(400);
+  return "";
 }
+
+// std::string HttpHandler::get_file_path(const std::string &uri) {
+//   std::string file_path;
+//   if (uri == "/") {
+//     for (size_t i = 0; i < server_->get_config().get_index().size(); i++) {
+//       file_path = server_->get_config().get_root() + "/" +
+//                   server_->get_config().get_index().at(i);
+//       if (stat(file_path.c_str(), &buffer) == 0)
+//         break;
+//     }
+//   } else
+//     file_path = server_->get_config().get_root() + request_.get_uri();
+//   return file_path;
+// }
 
 /// @brief Process a GET request
 const std::string HttpHandler::process_get() {
@@ -51,7 +69,7 @@ const std::string HttpHandler::process_get() {
           break;
       }
     } else
-      file_path = server_->get_config().get_root() + "/" + request_.get_uri();
+      file_path = server_->get_config().get_root() + request_.get_uri();
     if (*(request_.get_uri().end() - 1) == '/' &&
         server_->get_config().get_auto_index()) {
       file_path = server_->get_config().get_root() + request_.get_uri();
@@ -107,48 +125,74 @@ const std::string HttpHandler::process_delete() {
 
 #pragma region Utility Functions
 
+/// @brief Get the path of the error page
+/// @param status_code The status code
+/// @return The path of the error page
+//TODO Add support for different locations of error pages
+std::string HttpHandler::get_error_page_path(const int status_code) {
+  std::string path;
+
+  path = server_->get_config().get_root() +
+         server_->get_config().get_error_page().at(status_code);
+  switch (status_code) {
+  case 400:
+    return path.empty() ? "default_pages/bad_request.html" : path;
+  case 403:
+    return path.empty() ? "default_pages/forbidden.html" : path;
+  case 404:
+    return path.empty() ? "default_pages/not_found.html" : path;
+  case 413:
+    return path.empty() ? "default_pages/content_too_large.html" : path;
+  case 501:
+    return path.empty() ? "default_pages/not_implemented.html" : path;
+  default:
+    return path.empty() ? "default_pages/internal_server_error.html" : path;
+  }
+}
+
 /// @brief Get the error page
 /// @param status_code The status code
 /// @return The error page content
 std::string HttpHandler::get_error_page(const int status_code) {
-    std::string content;
-    std::stringstream ss;
+  std::string content;
+  std::string path;
+  std::stringstream ss;
 
   try {
     switch (status_code) {
     case 400:
-      content = read_file("default_pages/bad_request.html");
+      content = read_file(get_error_page_path(400));
       ss << content.length();
       WebServer::log(std::string(HTTP_400) + request_.get_uri(), warning);
       return response_builder("400", "Bad Request", "text/html", ss.str()) +
              content;
     case 403:
-      content = read_file("default_pages/forbidden.html");
+      content = read_file(get_error_page_path(403));
       ss << content.length();
       WebServer::log(std::string(HTTP_403) + request_.get_uri(), warning);
       return response_builder("403", "Forbidden", "text/html", ss.str()) +
              content;
     case 404:
-      content = read_file("default_pages/not_found.html");
+      content = read_file(get_error_page_path(404));
       ss << content.length();
       WebServer::log(std::string(HTTP_404) + request_.get_uri(), warning);
       return response_builder("404", "Not Found", "text/html", ss.str()) +
              content;
     case 413:
-      content = read_file("default_pages/content_too_large.html");
+      content = read_file(get_error_page_path(413));
       ss << content.length();
       WebServer::log(std::string(HTTP_413) + request_.get_uri(), warning);
       return response_builder("413", "Content Too Large", "text/html",
                               ss.str()) +
              content;
     case 501:
-      content = read_file("default_pages/not_implemented.html");
+      content = read_file(get_error_page_path(501));
       ss << content.length();
       WebServer::log(std::string(HTTP_501) + request_.get_uri(), warning);
       return response_builder("501", "Not Implemented", "text/html", ss.str()) +
              content;
     default:
-      content = read_file("default_pages/internal_server_error.html");
+      content = read_file(get_error_page_path(500));
       ss << content.length();
       WebServer::log(std::string(HTTP_500) + request_.get_uri(), warning);
       return response_builder("500", "Internal Server Error", "text/html",
@@ -170,7 +214,7 @@ const std::string HttpHandler::create_autoindex(const std::string &path,
                                                 const std::string &uri) {
   std::string autoindex;
   autoindex = "<!DOCTYPE html>\n<html>\n<head>\n<title>Index of " + uri +
-              "</title>\n<link rel=\"stylesheet\" href=\"styles.css\"> "
+              "</title>\n<link rel=\"stylesheet\" href=\"/styles.css\"> "
               "\n</head>\n<body>\n<h1 id=\"autoindex\">Index of " +
               uri + "</h1>\n";
   autoindex += "<table>\n<tr>\n<th>Name</th>\n<th>Last Modified</th>\n";
@@ -179,13 +223,16 @@ const std::string HttpHandler::create_autoindex(const std::string &path,
   struct dirent *ent;
   if ((dir = opendir(path.c_str())) != NULL) {
     while ((ent = readdir(dir)) != NULL) {
-      autoindex += "<tr>\n<td><a href=\"" + std::string(ent->d_name) + "\">" +
-                   std::string(ent->d_name) + "</a></td>\n";
       struct stat st;
       std::stringstream ss;
       std::string file_path = path + "/" + std::string(ent->d_name);
       stat(file_path.c_str(), &st);
       ss << st.st_size;
+      std::string itemName = S_ISDIR(st.st_mode)
+                                 ? std::string(ent->d_name) + "/"
+                                 : std::string(ent->d_name);
+      autoindex +=
+          "<tr>\n<td><a href=\"" + itemName + "\">" + itemName + "</a></td>\n";
       autoindex += "<td>" + std::string(ctime(&st.st_mtime)) + "</td>\n";
       autoindex += "<td>" + ss.str() + " B</td>\n</tr>\n";
     }
@@ -235,49 +282,49 @@ std::string HttpHandler::response_builder(const std::string &status_code,
                                           const std::string &status_message,
                                           const std::string &content_type,
                                           const std::string &content_length) {
-    std::string response = "HTTP/1.1 " + status_code + " " + status_message +
-                           "\r\n" + "Content-Type: " + content_type + "\r\n" +
-                           "Content-Length:" + content_length + "\r\n\r\n";
-    return (response);
+  std::string response = "HTTP/1.1 " + status_code + " " + status_message +
+                         "\r\n" + "Content-Type: " + content_type + "\r\n" +
+                         "Content-Length:" + content_length + "\r\n\r\n";
+  return (response);
 }
 
 /// @brief Read requested file
 /// @param file_path The path of the file
 /// @return The content of the file
 std::string HttpHandler::read_file(const std::string &file_path) {
-    std::fstream file;
-    std::string content;
+  std::fstream file;
+  std::string content;
 
-    const bool text_file = is_text_file(file_path);
-    if (!text_file)
-        file.open(file_path.c_str(), std::ios::in | std::ios::binary);
-    else
-        file.open(file_path.c_str(), std::ios::in);
-    if (file.is_open()) {
-        char buffer[1024];
-        if (!text_file) {
-            while (file.read(buffer, 1024))
-                content.append(buffer, 1024);
-        } else {
-            while (file.getline(buffer, 1024))
-                content += buffer;
-        }
-        file.close();
-    } else
-        throw std::runtime_error("404");
-    return (content);
+  const bool text_file = is_text_file(file_path);
+  if (!text_file)
+    file.open(file_path.c_str(), std::ios::in | std::ios::binary);
+  else
+    file.open(file_path.c_str(), std::ios::in);
+  if (file.is_open()) {
+    char buffer[1024];
+    if (!text_file) {
+      while (file.read(buffer, 1024))
+        content.append(buffer, 1024);
+    } else {
+      while (file.getline(buffer, 1024))
+        content += buffer;
+    }
+    file.close();
+  } else
+    throw std::runtime_error("404");
+  return (content);
 }
 
 /// @brief Check if a file is a text file
 /// @param file_path The path of the file
 /// @return True if the file is a text file, false otherwise
 bool HttpHandler::is_text_file(const std::string &file_path) {
-    const std::string extension =
-        file_path.substr(file_path.find_last_of('.') + 1);
-    if (extension == "html" || extension == "css" || extension == "js" ||
-        extension == "json" || extension == "xml" || extension == "svg")
-        return (true);
-    return (false);
+  const std::string extension =
+      file_path.substr(file_path.find_last_of('.') + 1);
+  if (extension == "html" || extension == "css" || extension == "js" ||
+      extension == "json" || extension == "xml" || extension == "svg")
+    return (true);
+  return (false);
 }
 
 /// @brief Get the content type of a file

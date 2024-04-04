@@ -35,6 +35,10 @@ class HttpHandler {
 
     std::string get_error_page(const int status_code);
 
+    std::string get_error_page_path(const int status_code);
+
+    std::string get_file_path(const std::string &uri);
+
     const std::string create_autoindex(const std::string &path, const std::string &uri);
 
     bool is_text_file(const std::string &file_path);
