@@ -124,7 +124,7 @@ void WebServer::send_response(const int socket, std::string &response) const {
     if (response.empty())
         return;
     size_t bytes_sent = 0;
-    while (bytes_sent < response.length()) {
+    while (bytes_sent < response.length()) { //!Must go through poll every time
         ssize_t sent = send(socket, response.c_str() + bytes_sent,
                             response.length() - bytes_sent, 0);
         if (sent == -1)
@@ -159,7 +159,6 @@ void WebServer::accept_connection(Server &server, const int socket) const {
 /// @return The response to send to the client
 std::string WebServer::handle_connection(Server &server,
                                          const int socket) const {
-    std::string response;
     char buffer[BUFFER_SIZE];
     const ssize_t bytes_received = recv(socket, buffer, BUFFER_SIZE, 0);
     if (!bytes_received || bytes_received == -1) {
@@ -167,9 +166,8 @@ std::string WebServer::handle_connection(Server &server,
         log(!bytes_received ? "Client disconnected"
                             : "Failed to receive data from the client",
             info);
-        return response;
+        return "";
     }
-
     const std::string data_received(buffer);
     HttpHandler http_handler(data_received, server);
     return http_handler.process_request();

@@ -39,6 +39,8 @@ class HttpHandler {
 
     bool is_text_file(const std::string &file_path);
 
+    bool is_valid_but_not_supported(const std::string &method);
+
     size_t get_max_size(const std::string &max_size);
 };
 

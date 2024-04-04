@@ -12,6 +12,11 @@ HttpHandler::HttpHandler(const std::string &request, Server &server)
 
 HttpHandler::~HttpHandler() {}
 
+bool HttpHandler::is_valid_but_not_supported(const std::string &method) {
+    return (method == "PUT" || method == "PATCH" || method == "TRACE" ||
+            method == "CONNECT" || method == "OPTIONS" || method == "HEAD");
+}
+
 #pragma region HTTP Methods
 
 /// @brief Process the request
@@ -22,8 +27,10 @@ const std::string HttpHandler::process_request() {
         return process_post();
     else if (request_.get_method() == "DELETE")
         return process_delete();
-    else
+    else if (is_valid_but_not_supported(request_.get_method()))
         return get_error_page(501);
+    else
+        return get_error_page(400);
     return "";
 }
 
@@ -75,7 +82,7 @@ const std::string HttpHandler::process_post() {
   std::cout << request_.get_request() << std::endl;
   if (request_.get_body().size() > max_size)
     return get_error_page(413);
-  std::string response = "Received" + request_.get_body();
+  std::string response = request_.get_body();
   std::stringstream ss;
   ss << response.length();
   return response_builder("201", "Created", "text/plain", ss.str()) + response;
@@ -109,6 +116,12 @@ std::string HttpHandler::get_error_page(const int status_code) {
 
   try {
     switch (status_code) {
+    case 400:
+      content = read_file("default_pages/bad_request.html");
+      ss << content.length();
+      WebServer::log(std::string(HTTP_400) + request_.get_uri(), warning);
+      return response_builder("400", "Bad Request", "text/html", ss.str()) +
+             content;
     case 403:
       content = read_file("default_pages/forbidden.html");
       ss << content.length();
