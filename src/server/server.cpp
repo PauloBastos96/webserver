@@ -21,6 +21,9 @@ Server::Server()
 Server::~Server() {
     if (socket_ > 0)
         close(socket_);
+    for (std::vector<int>::iterator it = connected_clients_.begin();
+         it != connected_clients_.end(); ++it)
+        close(*it);
 };
 
 #pragma endregion
