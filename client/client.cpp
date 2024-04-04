@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <csignal>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -8,7 +9,6 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <csignal>
 
 struct thread_data {
     int id;
@@ -51,7 +51,7 @@ void *routine(void *arg) {
                 sizeof(data->server_addr)) == -1)
         return print("Connection failed");
     print(itoa(data->id) + " = (" + itoa(data->socket) + ")");
-    while (data->requests-- ) {
+    while (data->requests--) {
         pthread_mutex_lock(&mutex);
         if (exit_flag) {
             pthread_mutex_unlock(&mutex);
