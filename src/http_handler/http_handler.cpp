@@ -14,14 +14,6 @@ HttpHandler::~HttpHandler() {}
 
 #pragma region HTTP Methods
 
-/// @brief Check if the method is a valid HTTP method but not supported
-/// @param method The method to check
-/// @return True if the method is valid but not supported, false otherwise
-bool HttpHandler::is_valid_but_not_supported(const std::string &method) {
-  return (method == "PUT" || method == "PATCH" || method == "TRACE" ||
-          method == "CONNECT" || method == "OPTIONS" || method == "HEAD");
-}
-
 /// @brief Process the request
 const std::string HttpHandler::process_request() {
   if (request_.get_method() == "GET")
@@ -30,7 +22,7 @@ const std::string HttpHandler::process_request() {
     return process_post();
   else if (request_.get_method() == "DELETE")
     return process_delete();
-  else if (is_valid_but_not_supported(request_.get_method()))
+  else if (IS_VALID_BUT_NOT_SUPPORTED(request_.get_method()))
     return get_error_page(501);
   else
     return get_error_page(400);
@@ -115,7 +107,7 @@ std::string HttpHandler::get_location_path(const std::string &uri) {
   for (size_t i = 0; i < locations.size(); i++) {
     if (uri == locations.at(i).get_path()) {
       std::vector<std::string> indexes =
-          locations.at(i).get_config().get_index();
+          locations.at(i).get_config().get_indexes();
       for (size_t j = 0; j < indexes.size(); j++) {
         path = server_->get_config().get_root() +
                locations.at(i).get_config().get_root() + "/" + indexes.at(j);
@@ -139,9 +131,9 @@ std::string HttpHandler::get_file_path(const std::string &uri) {
   Stat buffer;
 
   if (uri == "/") {
-    for (size_t i = 0; i < server_->get_config().get_index().size(); i++) {
+    for (size_t i = 0; i < server_->get_config().get_indexes().size(); i++) {
       file_path = server_->get_config().get_root() + "/" +
-                  server_->get_config().get_index().at(i);
+                  server_->get_config().get_indexes().at(i);
       if (stat(file_path.c_str(), &buffer) == 0)
         break;
     }
@@ -162,7 +154,7 @@ std::string HttpHandler::get_error_page_path(const int status_code) {
   std::string path;
 
   path = server_->get_config().get_root() +
-         server_->get_config().get_error_page().at(status_code);
+         server_->get_config().get_error_pages().at(status_code);
   switch (status_code) {
   case 400:
     return path.empty() ? "default_pages/bad_request.html" : path;

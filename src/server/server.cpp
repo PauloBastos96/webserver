@@ -14,7 +14,7 @@ Server::Server()
       connected_clients_() {
     config_.set_root("/");
     config_.set_max_client_body_size("1m");
-    config_.set_index("index.html");
+    config_.add_index("index.html");
     config_.set_auto_index(false);
 }
 

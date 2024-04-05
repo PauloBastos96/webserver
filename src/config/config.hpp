@@ -50,9 +50,9 @@ class Config {
 
     const std::string &get_root();
 
-    std::vector<std::string> &get_index();
+    std::vector<std::string> &get_indexes();
 
-    std::map<uint, std::string> &get_error_page();
+    std::map<uint, std::string> &get_error_pages();
 
     const std::string &get_max_client_body_size();
 
@@ -64,9 +64,9 @@ class Config {
 
     void set_root(const std::string &root);
 
-    void set_index(const std::string &index);
+    void add_index(const std::string &index);
 
-    void set_error_page(const uint &error_code, const std::string &error_page);
+    void add_error_page(const uint &error_code, const std::string &error_page);
 
     void set_max_client_body_size(const std::string &max_client_body_size);
 
@@ -76,8 +76,8 @@ class Config {
 
   private:
     std::string root_;
-    std::vector<std::string> index_;
-    std::map<uint, std::string> error_page_;
+    std::vector<std::string> indexes_;
+    std::map<uint, std::string> error_pages_;
     std::string max_client_body_size_;
     bool auto_index_;
 };

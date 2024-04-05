@@ -17,8 +17,8 @@ Config &Config::operator=(const Config &other) {
     if (this == &other)
         return (*this);
     root_ = other.root_;
-    index_ = other.index_;
-    error_page_ = other.error_page_;
+    indexes_ = other.indexes_;
+    error_pages_ = other.error_pages_;
     max_client_body_size_ = other.max_client_body_size_;
     auto_index_ = other.auto_index_;
     return (*this);
@@ -29,11 +29,11 @@ Config &Config::operator=(const Config &other) {
 
 void Config::set_root(const std::string &root) { root_ = root; }
 
-void Config::set_index(const std::string &index) { index_.push_back(index); }
+void Config::add_index(const std::string &index) { indexes_.push_back(index); }
 
-void Config::set_error_page(const uint &error_code,
+void Config::add_error_page(const uint &error_code,
                             const std::string &error_page) {
-    error_page_.insert(std::pair<uint, std::string>(error_code, error_page));
+    error_pages_.insert(std::pair<uint, std::string>(error_code, error_page));
 }
 
 void Config::set_max_client_body_size(const std::string &max_client_body_size) {
@@ -46,9 +46,9 @@ void Config::set_auto_index(const bool &autoindex) { auto_index_ = autoindex; }
 #pragma region Getters
 const std::string &Config::get_root() { return (root_); }
 
-std::vector<std::string> &Config::get_index() { return (index_); }
+std::vector<std::string> &Config::get_indexes() { return (indexes_); }
 
-std::map<uint, std::string> &Config::get_error_page() { return (error_page_); }
+std::map<uint, std::string> &Config::get_error_pages() { return (error_pages_); }
 
 const std::string &Config::get_max_client_body_size() {
     return (max_client_body_size_);
@@ -130,7 +130,7 @@ void Config::location(std::string line, Server &server, std::ifstream &file) {
                 line.find_first_of(';') - line.find_first_of(' ') - 1));
         if (line.find("index") != std::string::npos &&
             line.find("autoindex") == std::string::npos)
-            location.get_config().set_index(line.substr(
+            location.get_config().add_index(line.substr(
                 line.find_first_of(' ') + 1,
                 line.find_first_of(';') - line.find_first_of(' ') - 1));
         if (line.find("error_page") != std::string::npos)
@@ -266,15 +266,15 @@ void Config::display_configs(std::vector<Server> &servers) {
         std::cout << "Root: " << servers[i].get_config().get_root()
                   << std::endl;
         std::cout << "Index: ";
-        for (size_t j = 0; j < servers[i].get_config().get_index().size();
+        for (size_t j = 0; j < servers[i].get_config().get_indexes().size();
              j++) {
-            std::cout << servers[i].get_config().get_index()[j] << " ";
+            std::cout << servers[i].get_config().get_indexes()[j] << " ";
         }
         std::cout << std::endl;
         std::cout << "Error pages: ";
         for (std::map<uint, std::string>::iterator it =
-                 servers[i].get_config().get_error_page().begin();
-             it != servers[i].get_config().get_error_page().end(); it++) {
+                 servers[i].get_config().get_error_pages().begin();
+             it != servers[i].get_config().get_error_pages().end(); it++) {
             std::cout << it->first << "=>" << it->second << " ";
         }
         std::cout << std::endl;
@@ -296,12 +296,12 @@ void Config::display_configs(std::vector<Server> &servers) {
                       << "Index: ";
             for (size_t k = 0;
                  k <
-                 servers[i].get_locations()[j].get_config().get_index().size();
+                 servers[i].get_locations()[j].get_config().get_indexes().size();
                  k++) {
                 std::cout << servers[i]
                                  .get_locations()[j]
                                  .get_config()
-                                 .get_index()[k];
+                                 .get_indexes()[k];
             }
             std::cout << std::endl;
             std::cout << "	"
@@ -310,12 +310,12 @@ void Config::display_configs(std::vector<Server> &servers) {
                      servers[i]
                          .get_locations()[j]
                          .get_config()
-                         .get_error_page()
+                         .get_error_pages()
                          .begin();
                  it != servers[i]
                            .get_locations()[j]
                            .get_config()
-                           .get_error_page()
+                           .get_error_pages()
                            .end();
                  it++) {
                 std::cout << "	" << it->first << " " << it->second << " ";
