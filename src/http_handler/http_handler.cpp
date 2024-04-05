@@ -29,6 +29,23 @@ const std::string HttpHandler::process_request() {
   return "";
 }
 
+bool should_generate_autoindex(const std::string &uri, Server &server) {
+  if (uri == "/" && server.get_config().get_auto_index())
+    return true;
+  else if (*(uri.end() - 1) == '/')
+  {
+    std::vector<Location> locations = server.get_locations();
+    if (locations.empty() && server.get_config().get_auto_index())
+      return true;
+    for (size_t i = 0; i < locations.size(); i++) {
+      if (uri == locations.at(i).get_path() &&
+          locations.at(i).get_config().get_auto_index())
+        return true;
+    }
+  }
+  return false;
+}
+
 /// @brief Process a GET request
 const std::string HttpHandler::process_get() {
   std::fstream file;
