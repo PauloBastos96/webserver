@@ -12,7 +12,6 @@ HttpHandler::HttpHandler(const std::string &request, Server &server)
 
 HttpHandler::~HttpHandler() {}
 
-
 #pragma region HTTP Methods
 
 /// @brief Check if the method is a valid HTTP method but not supported
@@ -38,38 +37,16 @@ const std::string HttpHandler::process_request() {
   return "";
 }
 
-// std::string HttpHandler::get_file_path(const std::string &uri) {
-//   std::string file_path;
-//   if (uri == "/") {
-//     for (size_t i = 0; i < server_->get_config().get_index().size(); i++) {
-//       file_path = server_->get_config().get_root() + "/" +
-//                   server_->get_config().get_index().at(i);
-//       if (stat(file_path.c_str(), &buffer) == 0)
-//         break;
-//     }
-//   } else
-//     file_path = server_->get_config().get_root() + request_.get_uri();
-//   return file_path;
-// }
-
 /// @brief Process a GET request
 const std::string HttpHandler::process_get() {
   std::fstream file;
   std::string content;
   std::string file_path;
-  Stat buffer;
   std::stringstream ss;
+  Stat buffer;
 
   try {
-    if (request_.get_uri() == "/") {
-      for (size_t i = 0; i < server_->get_config().get_index().size(); i++) {
-        file_path = server_->get_config().get_root() + "/" +
-                    server_->get_config().get_index().at(i);
-        if (stat(file_path.c_str(), &buffer) == 0)
-          break;
-      }
-    } else
-      file_path = server_->get_config().get_root() + request_.get_uri();
+    file_path = get_file_path(request_.get_uri());
     if (*(request_.get_uri().end() - 1) == '/' &&
         server_->get_config().get_auto_index()) {
       file_path = server_->get_config().get_root() + request_.get_uri();
@@ -82,6 +59,8 @@ const std::string HttpHandler::process_get() {
       WebServer::log(std::string(HTTP_200) + request_.get_uri(), info);
       return response + content;
     }
+    if (stat(file_path.c_str(), &buffer) != 0 || S_ISDIR(buffer.st_mode))
+     throw std::runtime_error("404");
     content = read_file(file_path);
     ss << content.length();
     std::string response =
@@ -125,10 +104,60 @@ const std::string HttpHandler::process_delete() {
 
 #pragma region Utility Functions
 
+/// @brief Get the path of the location
+/// @param uri The URI of the request
+/// @return The path of the location
+std::string HttpHandler::get_location_path(const std::string &uri) {
+  std::string path;
+  std::vector<Location> locations = server_->get_locations();
+  Stat buffer;
+
+  for (size_t i = 0; i < locations.size(); i++) {
+    if (uri == locations.at(i).get_path()) {
+      std::vector<std::string> indexes =
+          locations.at(i).get_config().get_index();
+      for (size_t j = 0; j < indexes.size(); j++) {
+        path = server_->get_config().get_root() +
+               locations.at(i).get_config().get_root() + "/" + indexes.at(j);
+        if (stat(path.c_str(), &buffer) == 0)
+          break;
+      }
+    } else {
+      path = server_->get_config().get_root() + uri;
+      if (stat(path.c_str(), &buffer) == 0)
+        break;
+    }
+  }
+  return path;
+}
+
+/// @brief Get the path of the requested file
+/// @param uri The URI of the request
+/// @return The path of the requested file
+std::string HttpHandler::get_file_path(const std::string &uri) {
+  std::string file_path;
+  Stat buffer;
+
+  if (uri == "/") {
+    for (size_t i = 0; i < server_->get_config().get_index().size(); i++) {
+      file_path = server_->get_config().get_root() + "/" +
+                  server_->get_config().get_index().at(i);
+      if (stat(file_path.c_str(), &buffer) == 0)
+        break;
+    }
+  } else {
+    if (server_->get_locations().empty())
+      file_path = server_->get_config().get_root() + uri;
+    else
+      file_path = get_location_path(uri);
+  }
+  return file_path;
+}
+
 /// @brief Get the path of the error page
 /// @param status_code The status code
 /// @return The path of the error page
-//TODO Add support for different locations of error pages
+// TODO Add support for different locations of error pages
 std::string HttpHandler::get_error_page_path(const int status_code) {
   std::string path;
 

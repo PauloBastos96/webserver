@@ -39,6 +39,8 @@ class HttpHandler {
 
     std::string get_file_path(const std::string &uri);
 
+    std::string get_location_path(const std::string &uri);
+
     const std::string create_autoindex(const std::string &path, const std::string &uri);
 
     bool is_text_file(const std::string &file_path);
