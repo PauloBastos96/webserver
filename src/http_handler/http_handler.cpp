@@ -15,7 +15,7 @@ HttpHandler::~HttpHandler() {}
 #pragma region HTTP Methods
 
 /// @brief Process the request
-const std::string HttpHandler::process_request() {
+std::string HttpHandler::process_request() {
     if (request_.get_method() == "GET")
         return process_get();
     else if (request_.get_method() == "POST")
@@ -27,7 +27,7 @@ const std::string HttpHandler::process_request() {
 }
 
 /// @brief Process a GET request
-const std::string HttpHandler::process_get() {
+std::string HttpHandler::process_get() {
     std::fstream file;
     std::string content;
     std::string file_path;
@@ -70,7 +70,7 @@ const std::string HttpHandler::process_get() {
 }
 
 /// @brief Process a POST request
-const std::string HttpHandler::process_post() {
+std::string HttpHandler::process_post() {
     size_t max_size =
         get_max_size(server_->get_config().get_max_client_body_size());
     std::cout << request_.get_request() << std::endl;
@@ -84,7 +84,7 @@ const std::string HttpHandler::process_post() {
 }
 
 /// @brief Process a DELETE request
-const std::string HttpHandler::process_delete() {
+std::string HttpHandler::process_delete() {
     std::string file_path;
     Stat buffer;
 
@@ -156,8 +156,8 @@ std::string HttpHandler::get_error_page(const int status_code) {
 /// @param path The path of the directory
 /// @param uri The URI of the directory
 /// @return The autoindex page content
-const std::string HttpHandler::create_autoindex(const std::string &path,
-                                                const std::string &uri) {
+std::string HttpHandler::create_autoindex(const std::string &path,
+                                          const std::string &uri) {
     std::string autoindex;
     autoindex = "<!DOCTYPE html>\n<html>\n<head>\n<title>Index of " + uri +
                 "</title>\n<link rel=\"stylesheet\" href=\"styles.css\"> "
