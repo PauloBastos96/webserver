@@ -8,7 +8,10 @@
 #include <unistd.h>
 
 HttpHandler::HttpHandler(const std::string &request, Server &server)
-    : request_(request), server_(&server) {}
+    : server_(&server) {
+  HttpParser parser(request);
+  headers_ = parser.get_headers();
+}
 
 HttpHandler::~HttpHandler() {}
 
@@ -16,24 +19,30 @@ HttpHandler::~HttpHandler() {}
 
 /// @brief Process the request
 std::string HttpHandler::process_request() {
-  if (request_.get_method() == "GET")
+  if (!is_method_allowed(headers_["method"]))
+    return get_error_page(405);
+  if (headers_["method"] == "GET")
     return process_get();
-  else if (request_.get_method() == "POST")
+  else if (headers_["method"] == "POST")
     return process_post();
-  else if (request_.get_method() == "DELETE")
+  else if (headers_["method"] == "DELETE")
     return process_delete();
-  else if (IS_VALID_BUT_NOT_SUPPORTED(request_.get_method()))
+  else if (IS_VALID_BUT_NOT_SUPPORTED(headers_["method"]))
     return get_error_page(501);
   else
     return get_error_page(400);
   return "";
 }
 
+/// @brief Check if the server should generate an autoindex page
+/// @param uri The URI of the request
+/// @param server A reference to the server
+/// @return True if the server should generate an autoindex page, false
+/// otherwise
 bool should_generate_autoindex(const std::string &uri, Server &server) {
   if (uri == "/" && server.get_config().get_auto_index())
     return true;
-  else if (*(uri.end() - 1) == '/')
-  {
+  else if (*(uri.end() - 1) == '/') {
     std::vector<Location> locations = server.get_locations();
     if (locations.empty() && server.get_config().get_auto_index())
       return true;
@@ -46,6 +55,26 @@ bool should_generate_autoindex(const std::string &uri, Server &server) {
   return false;
 }
 
+/// @brief Check if the method is allowed for the location
+/// @param method The method to check
+/// @return True if the method is allowed, false otherwise
+bool HttpHandler::is_method_allowed(const std::string &method) {
+  std::string location =
+      headers_["uri"].substr(0, headers_["uri"].find_last_of('/'));
+  std::vector<Location> locations = server_->get_locations();
+  for (size_t i = 0; i < locations.size(); i++) {
+    if (location == locations.at(i).get_path()) {
+      for (size_t j = 0; j < locations.at(i).get_allowed_methods().size();
+           j++) {
+        if (method == locations.at(i).get_allowed_methods().at(j))
+          return true;
+      }
+      return false;
+    }
+  }
+  return true;
+}
+
 /// @brief Process a GET request
 std::string HttpHandler::process_get() {
   std::fstream file;
@@ -55,26 +84,26 @@ std::string HttpHandler::process_get() {
   Stat buffer;
 
   try {
-    file_path = get_file_path(request_.get_uri());
-    if (*(request_.get_uri().end() - 1) == '/' &&
+    file_path = get_file_path(headers_["uri"]);
+    if (*(headers_["uri"].end() - 1) == '/' &&
         server_->get_config().get_auto_index()) {
-      file_path = server_->get_config().get_root() + request_.get_uri();
-      content = create_autoindex(file_path, request_.get_uri());
+      file_path = server_->get_config().get_root() + headers_["uri"];
+      content = create_autoindex(file_path, headers_["uri"]);
       if (content.empty())
         return get_error_page(404);
       ss << content.length();
       std::string response =
           response_builder("200", "OK", "text/html", ss.str());
-      WebServer::log(std::string(HTTP_200) + request_.get_uri(), info);
+      WebServer::log(std::string(HTTP_200) + headers_["uri"], info);
       return response + content;
     }
     if (stat(file_path.c_str(), &buffer) != 0 || S_ISDIR(buffer.st_mode))
-     throw std::runtime_error("404");
+      throw std::runtime_error("404");
     content = read_file(file_path);
     ss << content.length();
     std::string response =
         response_builder("200", "OK", get_content_type(file_path), ss.str());
-    WebServer::log(std::string(HTTP_200) + request_.get_uri(), info);
+    WebServer::log(std::string(HTTP_200) + headers_["uri"], info);
     return response + content;
   } catch (const std::runtime_error &e) {
     return get_error_page(404);
@@ -83,31 +112,29 @@ std::string HttpHandler::process_get() {
 
 /// @brief Process a POST request
 std::string HttpHandler::process_post() {
-    size_t max_size =
-        get_max_size(server_->get_config().get_max_client_body_size());
-    std::cout << request_.get_request() << std::endl;
-    if (request_.get_body().size() > max_size)
-        return get_error_page(413);
-    std::string response = "Received" + request_.get_body();
-    std::stringstream ss;
-    ss << response.length();
-    return response_builder("201", "Created", "text/plain", ss.str()) +
-           response;
+  size_t max_size =
+      get_max_size(server_->get_config().get_max_client_body_size());
+  if (headers_["body"].size() > max_size)
+    return get_error_page(413);
+  std::string response = "Received" + headers_["body"];
+  std::stringstream ss;
+  ss << response.length();
+  return response_builder("201", "Created", "text/plain", ss.str()) + response;
 }
 
 /// @brief Process a DELETE request
 std::string HttpHandler::process_delete() {
-    std::string file_path;
-    Stat buffer;
+  std::string file_path;
+  Stat buffer;
 
-    file_path = server_->get_config().get_root() + request_.get_uri();
-    if (stat(file_path.c_str(), &buffer) != 0)
-        return get_error_page(404);
-    if (!(buffer.st_mode & S_IWOTH))
-        return get_error_page(403);
-    if (std::remove(file_path.c_str()))
-        return get_error_page(403);
-    return response_builder("204", "No Content", "text/plain", "0");
+  file_path = server_->get_config().get_root() + headers_["uri"];
+  if (stat(file_path.c_str(), &buffer) != 0)
+    return get_error_page(404);
+  if (!(buffer.st_mode & S_IWOTH))
+    return get_error_page(403);
+  if (std::remove(file_path.c_str()))
+    return get_error_page(403);
+  return response_builder("204", "No Content", "text/plain", "0");
 }
 
 #pragma endregion
@@ -130,7 +157,7 @@ std::string HttpHandler::get_location_path(const std::string &uri) {
         path = server_->get_config().get_root() +
                locations.at(i).get_config().get_root() + "/" + indexes.at(j);
         if (stat(path.c_str(), &buffer) == 0)
-          break;
+          return path;
       }
     } else {
       path = server_->get_config().get_root() + uri;
@@ -167,25 +194,83 @@ std::string HttpHandler::get_file_path(const std::string &uri) {
 /// @brief Get the path of the error page
 /// @param status_code The status code
 /// @return The path of the error page
-// TODO Add support for different locations of error pages
 std::string HttpHandler::get_error_page_path(const int status_code) {
-  std::string path;
+  std::string path = "";
+  std::string location;
+  Stat buffer;
+  bool hasCustomErrorPage = false;
+  bool isValidPath = false;
 
-  path = server_->get_config().get_root() +
-         server_->get_config().get_error_pages().at(status_code);
+  get_route_error_page(hasCustomErrorPage, status_code, path);
+  isValidPath = stat(path.c_str(), &buffer) == 0;
   switch (status_code) {
   case 400:
-    return path.empty() ? "default_pages/bad_request.html" : path;
+    return (!hasCustomErrorPage || !isValidPath)
+               ? "default_pages/bad_request.html"
+               : path;
   case 403:
-    return path.empty() ? "default_pages/forbidden.html" : path;
+    return (!hasCustomErrorPage || !isValidPath)
+               ? "default_pages/forbidden.html"
+               : path;
   case 404:
-    return path.empty() ? "default_pages/not_found.html" : path;
+    return (!hasCustomErrorPage || !isValidPath)
+               ? "default_pages/not_found.html"
+               : path;
+  case 405:
+    return (!hasCustomErrorPage || !isValidPath)
+               ? "default_pages/not_allowed.html"
+               : path;
   case 413:
-    return path.empty() ? "default_pages/content_too_large.html" : path;
+    return (!hasCustomErrorPage || !isValidPath)
+               ? "default_pages/content_too_large.html"
+               : path;
   case 501:
-    return path.empty() ? "default_pages/not_implemented.html" : path;
+    return (!hasCustomErrorPage || !isValidPath)
+               ? "default_pages/not_implemented.html"
+               : path;
   default:
-    return path.empty() ? "default_pages/internal_server_error.html" : path;
+    return (!hasCustomErrorPage || !isValidPath)
+               ? "default_pages/internal_server_error.html"
+               : path;
+  }
+}
+
+/// @brief Get the error page for the route
+/// @param hasCustomErrorPage Set value to true if the route has a custom error
+/// page
+/// @param status_code The status code
+/// @param path Set the path of the error page
+void HttpHandler::get_route_error_page(bool &hasCustomErrorPage,
+                                       const int status_code,
+                                       std::string &path) {
+  std::string location;
+  location = headers_["uri"].substr(0, headers_["uri"].find_last_of('/'));
+  std::vector<Location> locations = server_->get_locations();
+  try {
+    for (size_t i = 0; i < locations.size(); i++) {
+      if (location == locations.at(i).get_path()) {
+        hasCustomErrorPage =
+            locations.at(i).get_config().get_error_pages().find(status_code) !=
+            locations.at(i).get_config().get_error_pages().end();
+        if (locations.at(i).get_config().get_root().empty())
+          path = server_->get_config().get_root() +
+                 locations.at(i).get_config().get_error_pages().at(status_code);
+        else
+          path = server_->get_config().get_root() +
+                 locations.at(i).get_config().get_root() +
+                 locations.at(i).get_config().get_error_pages().at(status_code);
+        break;
+      }
+      if (i == locations.size() - 1) {
+        hasCustomErrorPage =
+            server_->get_config().get_error_pages().find(status_code) !=
+            server_->get_config().get_error_pages().end();
+        path = server_->get_config().get_root() +
+               server_->get_config().get_error_pages().at(status_code);
+      }
+    }
+  } catch (const std::out_of_range &e) {
+    hasCustomErrorPage = false;
   }
 }
 
@@ -202,45 +287,52 @@ std::string HttpHandler::get_error_page(const int status_code) {
     case 400:
       content = read_file(get_error_page_path(400));
       ss << content.length();
-      WebServer::log(std::string(HTTP_400) + request_.get_uri(), warning);
+      WebServer::log(std::string(HTTP_400) + headers_["uri"], warning);
       return response_builder("400", "Bad Request", "text/html", ss.str()) +
              content;
     case 403:
       content = read_file(get_error_page_path(403));
       ss << content.length();
-      WebServer::log(std::string(HTTP_403) + request_.get_uri(), warning);
+      WebServer::log(std::string(HTTP_403) + headers_["uri"], warning);
       return response_builder("403", "Forbidden", "text/html", ss.str()) +
              content;
     case 404:
       content = read_file(get_error_page_path(404));
       ss << content.length();
-      WebServer::log(std::string(HTTP_404) + request_.get_uri(), warning);
+      WebServer::log(std::string(HTTP_404) + headers_["uri"], warning);
       return response_builder("404", "Not Found", "text/html", ss.str()) +
+             content;
+    case 405:
+      content = read_file(get_error_page_path(405));
+      ss << content.length();
+      WebServer::log(std::string(HTTP_405) + headers_["uri"], warning);
+      return response_builder("405", "Method Not Allowed", "text/html",
+                              ss.str()) +
              content;
     case 413:
       content = read_file(get_error_page_path(413));
       ss << content.length();
-      WebServer::log(std::string(HTTP_413) + request_.get_uri(), warning);
+      WebServer::log(std::string(HTTP_413) + headers_["uri"], warning);
       return response_builder("413", "Content Too Large", "text/html",
                               ss.str()) +
              content;
     case 501:
       content = read_file(get_error_page_path(501));
       ss << content.length();
-      WebServer::log(std::string(HTTP_501) + request_.get_uri(), warning);
+      WebServer::log(std::string(HTTP_501) + headers_["uri"], warning);
       return response_builder("501", "Not Implemented", "text/html", ss.str()) +
              content;
     default:
       content = read_file(get_error_page_path(500));
       ss << content.length();
-      WebServer::log(std::string(HTTP_500) + request_.get_uri(), warning);
+      WebServer::log(std::string(HTTP_500) + headers_["uri"], warning);
       return response_builder("500", "Internal Server Error", "text/html",
                               ss.str()) +
              content;
     }
   } catch (...) {
     return response_builder("500", "Internal Server Error", "text/plain",
-                            "23") +
+                            "22") +
            " Internal Server Error";
   }
 }
@@ -287,28 +379,28 @@ const std::string HttpHandler::create_autoindex(const std::string &path,
 /// @param max_size The maximum size set in the configuration file
 /// @return The maximum size of the client body in bytes
 size_t HttpHandler::get_max_size(const std::string &max_size) {
-    size_t size = 0;
-    char unit;
+  size_t size = 0;
+  char unit;
 
-    if (isalpha(*(max_size.end() - 1)))
-        unit = std::tolower(*(max_size.end() - 1));
-    else
-        unit = 'b';
-    switch (unit) {
-    case 'k':
-        size = std::atoi(max_size.c_str()) * 1024;
-        break;
-    case 'm':
-        size = std::atoi(max_size.c_str()) * 1024 * 1024;
-        break;
-    case 'g':
-        size = std::atoi(max_size.c_str()) * 1024 * 1024 * 1024;
-        break;
-    default:
-        size = std::atoi(max_size.c_str());
-        break;
-    }
-    return size;
+  if (isalpha(*(max_size.end() - 1)))
+    unit = std::tolower(*(max_size.end() - 1));
+  else
+    unit = 'b';
+  switch (unit) {
+  case 'k':
+    size = std::atoi(max_size.c_str()) * 1024;
+    break;
+  case 'm':
+    size = std::atoi(max_size.c_str()) * 1024 * 1024;
+    break;
+  case 'g':
+    size = std::atoi(max_size.c_str()) * 1024 * 1024 * 1024;
+    break;
+  default:
+    size = std::atoi(max_size.c_str());
+    break;
+  }
+  return size;
 }
 
 /// @brief Build the response header
@@ -370,27 +462,27 @@ bool HttpHandler::is_text_file(const std::string &file_path) {
 /// @param file_path The path of the file
 /// @return The content type of the file
 std::string HttpHandler::get_content_type(const std::string &file_path) {
-    const std::string extension =
-        file_path.substr(file_path.find_last_of('.') + 1);
-    if (extension == "html" || extension == "css")
-        return ("text/" + extension);
-    if (extension == "js")
-        return ("text/javascript");
-    if (extension == "jpeg" || extension == "jpg")
-        return ("image/jpeg");
-    if (extension == "png")
-        return ("image/png");
-    if (extension == "gif")
-        return ("image/gif");
-    if (extension == "svg")
-        return ("image/svg+xml");
-    if (extension == "json")
-        return ("application/json");
-    if (extension == "xml")
-        return ("application/xml");
-    if (extension == "form")
-        return ("application/x-www-form-urlencoded");
-    return ("text/plain");
+  const std::string extension =
+      file_path.substr(file_path.find_last_of('.') + 1);
+  if (extension == "html" || extension == "css")
+    return ("text/" + extension);
+  if (extension == "js")
+    return ("text/javascript");
+  if (extension == "jpeg" || extension == "jpg")
+    return ("image/jpeg");
+  if (extension == "png")
+    return ("image/png");
+  if (extension == "gif")
+    return ("image/gif");
+  if (extension == "svg")
+    return ("image/svg+xml");
+  if (extension == "json")
+    return ("application/json");
+  if (extension == "xml")
+    return ("application/xml");
+  if (extension == "form")
+    return ("application/x-www-form-urlencoded");
+  return ("text/plain");
 }
 
 #pragma endregion

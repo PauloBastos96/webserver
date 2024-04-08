@@ -49,6 +49,7 @@ enum log_level {
 #define HTTP_400 "[400] Bad Request  |   URI:"
 #define HTTP_403 "[403] Forbidden  |   URI:"
 #define HTTP_404 "[404] Not Found  |   URI:"
+#define HTTP_405 "[405] Method Not Allowed  |   URI:"
 #define HTTP_413 "[413] Content Too Large  |   URI:"
 #define HTTP_501 "[501] Not Implemented  |   URI:"
 #define HTTP_500 "[500] Internal Server Error  |   URI:"

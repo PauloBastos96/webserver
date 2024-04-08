@@ -162,7 +162,7 @@ void Config::limit_except(const std::string &line, Location &location) {
     while (ss >> word) {
         if (word != "limit_except" &&
             word.find_first_of('{') == std::string::npos)
-            location.set_allowed_methods(word);
+            location.add_allowed_methods(word);
     }
 }
 
