@@ -210,10 +210,11 @@ std::string HttpHandler::get_error_page_path(const int status_code) {
 void HttpHandler::get_route_error_page(bool &hasCustomErrorPage,
                                        const int status_code,
                                        std::string &path) {
+  std::string location;
+  location = request_.get_uri().substr(0, request_.get_uri().find_last_of('/'));
   std::vector<Location> locations = server_->get_locations();
   for (size_t i = 0; i < locations.size(); i++) {
-    if (request_.get_uri().find(locations.at(i).get_path()) !=
-        std::string::npos) {
+    if (location == locations.at(i).get_path()) {
       hasCustomErrorPage =
           locations.at(i).get_config().get_error_pages().find(status_code) !=
           locations.at(i).get_config().get_error_pages().end();
