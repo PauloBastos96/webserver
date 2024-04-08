@@ -12,17 +12,17 @@ class HttpHandler {
 
     ~HttpHandler();
 
-    const std::string process_request();
+    std::string process_request();
 
   private:
     HttpParser request_;
     Server *server_;
 
-    const std::string process_get();
+    std::string process_get();
 
-    const std::string process_post();
+    std::string process_post();
 
-    const std::string process_delete();
+    std::string process_delete();
 
     std::string response_builder(const std::string &status_code,
                                  const std::string &status_message,
@@ -35,7 +35,12 @@ class HttpHandler {
 
     std::string get_error_page(const int status_code);
 
+    std::string create_autoindex(const std::string &path,
+                                 const std::string &uri);
+
     bool is_text_file(const std::string &file_path);
+
+    size_t get_max_size(const std::string &max_size);
 };
 
 #endif

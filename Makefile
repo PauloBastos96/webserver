@@ -10,8 +10,8 @@ EMOJI_TRASH = \360\237\227\221\357\270\217
 
 NAME = webserv
 
-CC = c++
-CFLAGS = -Werror -Wextra -Wall -Wno-unknown-pragmas -O3 -std=c++98 -g $(INC)
+CXX = c++
+CXXFLAGS = -Werror -Wextra -Wall -Wno-unknown-pragmas -O3 -std=c++98 -g $(INC)
 
 SRC_PATH = src/
 OBJ_PATH = obj/
@@ -26,7 +26,7 @@ all: $(NAME)
 
 $(OBJ_PATH)%.o: $(SRC_PATH)%.cpp | $(OBJ_PATH)
 	 @mkdir -p $(dir $@)
-	 @$(CC) $(CFLAGS) $(INC) -c $< -o $@
+	 @$(CXX) $(CXXFLAGS) $(INC) -c $< -o $@
 	 @printf "$(EMOJI_HAMMER)	$(BLUE)Compiling $(WHITE)$(NAME)		$(BLUE)%-33s$(WHITE)\r" $(notdir $@)
 
 $(LOGS_PATH):
@@ -41,7 +41,7 @@ $(OBJ_PATH):
 	@mkdir -p $(OBJ_PATH)
 
 $(NAME): $(OBJ) $(LOGS_PATH) $(CONFIGS_PATH)
-	@$(CC) $(CFLAGS) -o $(NAME) $(OBJ)
+	@$(CXX) $(CXXFLAGS) -o $(NAME) $(OBJ)
 	@printf  "\n$(EMOJI_PACKAGE)	$(WHITE)$(NAME)				$(YELLOW)compiled$(WHITE)\n"
 
 clean:
