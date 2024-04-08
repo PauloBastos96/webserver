@@ -8,7 +8,10 @@
 #include <unistd.h>
 
 HttpHandler::HttpHandler(const std::string &request, Server &server)
-    : request_(request), server_(&server) {}
+    : server_(&server) {
+  HttpParser parser(request);
+  headers_ = parser.get_headers();
+}
 
 HttpHandler::~HttpHandler() {}
 
@@ -16,15 +19,15 @@ HttpHandler::~HttpHandler() {}
 
 /// @brief Process the request
 std::string HttpHandler::process_request() {
-  if (!is_method_allowed(request_.get_method()))
+  if (!is_method_allowed(headers_["method"]))
     return get_error_page(405);
-  if (request_.get_method() == "GET")
+  if (headers_["method"] == "GET")
     return process_get();
-  else if (request_.get_method() == "POST")
+  else if (headers_["method"] == "POST")
     return process_post();
-  else if (request_.get_method() == "DELETE")
+  else if (headers_["method"] == "DELETE")
     return process_delete();
-  else if (IS_VALID_BUT_NOT_SUPPORTED(request_.get_method()))
+  else if (IS_VALID_BUT_NOT_SUPPORTED(headers_["method"]))
     return get_error_page(501);
   else
     return get_error_page(400);
@@ -57,7 +60,7 @@ bool should_generate_autoindex(const std::string &uri, Server &server) {
 /// @return True if the method is allowed, false otherwise
 bool HttpHandler::is_method_allowed(const std::string &method) {
   std::string location =
-      request_.get_uri().substr(0, request_.get_uri().find_last_of('/'));
+      headers_["uri"].substr(0, headers_["uri"].find_last_of('/'));
   std::vector<Location> locations = server_->get_locations();
   for (size_t i = 0; i < locations.size(); i++) {
     if (location == locations.at(i).get_path()) {
@@ -81,17 +84,17 @@ std::string HttpHandler::process_get() {
   Stat buffer;
 
   try {
-    file_path = get_file_path(request_.get_uri());
-    if (*(request_.get_uri().end() - 1) == '/' &&
+    file_path = get_file_path(headers_["uri"]);
+    if (*(headers_["uri"].end() - 1) == '/' &&
         server_->get_config().get_auto_index()) {
-      file_path = server_->get_config().get_root() + request_.get_uri();
-      content = create_autoindex(file_path, request_.get_uri());
+      file_path = server_->get_config().get_root() + headers_["uri"];
+      content = create_autoindex(file_path, headers_["uri"]);
       if (content.empty())
         return get_error_page(404);
       ss << content.length();
       std::string response =
           response_builder("200", "OK", "text/html", ss.str());
-      WebServer::log(std::string(HTTP_200) + request_.get_uri(), info);
+      WebServer::log(std::string(HTTP_200) + headers_["uri"], info);
       return response + content;
     }
     if (stat(file_path.c_str(), &buffer) != 0 || S_ISDIR(buffer.st_mode))
@@ -100,7 +103,7 @@ std::string HttpHandler::process_get() {
     ss << content.length();
     std::string response =
         response_builder("200", "OK", get_content_type(file_path), ss.str());
-    WebServer::log(std::string(HTTP_200) + request_.get_uri(), info);
+    WebServer::log(std::string(HTTP_200) + headers_["uri"], info);
     return response + content;
   } catch (const std::runtime_error &e) {
     return get_error_page(404);
@@ -111,10 +114,9 @@ std::string HttpHandler::process_get() {
 std::string HttpHandler::process_post() {
   size_t max_size =
       get_max_size(server_->get_config().get_max_client_body_size());
-  std::cout << request_.get_request() << std::endl;
-  if (request_.get_body().size() > max_size)
+  if (headers_["body"].size() > max_size)
     return get_error_page(413);
-  std::string response = "Received" + request_.get_body();
+  std::string response = "Received" + headers_["body"];
   std::stringstream ss;
   ss << response.length();
   return response_builder("201", "Created", "text/plain", ss.str()) + response;
@@ -125,7 +127,7 @@ std::string HttpHandler::process_delete() {
   std::string file_path;
   Stat buffer;
 
-  file_path = server_->get_config().get_root() + request_.get_uri();
+  file_path = server_->get_config().get_root() + headers_["uri"];
   if (stat(file_path.c_str(), &buffer) != 0)
     return get_error_page(404);
   if (!(buffer.st_mode & S_IWOTH))
@@ -242,7 +244,7 @@ void HttpHandler::get_route_error_page(bool &hasCustomErrorPage,
                                        const int status_code,
                                        std::string &path) {
   std::string location;
-  location = request_.get_uri().substr(0, request_.get_uri().find_last_of('/'));
+  location = headers_["uri"].substr(0, headers_["uri"].find_last_of('/'));
   std::vector<Location> locations = server_->get_locations();
   try {
     for (size_t i = 0; i < locations.size(); i++) {
@@ -285,45 +287,45 @@ std::string HttpHandler::get_error_page(const int status_code) {
     case 400:
       content = read_file(get_error_page_path(400));
       ss << content.length();
-      WebServer::log(std::string(HTTP_400) + request_.get_uri(), warning);
+      WebServer::log(std::string(HTTP_400) + headers_["uri"], warning);
       return response_builder("400", "Bad Request", "text/html", ss.str()) +
              content;
     case 403:
       content = read_file(get_error_page_path(403));
       ss << content.length();
-      WebServer::log(std::string(HTTP_403) + request_.get_uri(), warning);
+      WebServer::log(std::string(HTTP_403) + headers_["uri"], warning);
       return response_builder("403", "Forbidden", "text/html", ss.str()) +
              content;
     case 404:
       content = read_file(get_error_page_path(404));
       ss << content.length();
-      WebServer::log(std::string(HTTP_404) + request_.get_uri(), warning);
+      WebServer::log(std::string(HTTP_404) + headers_["uri"], warning);
       return response_builder("404", "Not Found", "text/html", ss.str()) +
              content;
     case 405:
       content = read_file(get_error_page_path(405));
       ss << content.length();
-      WebServer::log(std::string(HTTP_405) + request_.get_uri(), warning);
+      WebServer::log(std::string(HTTP_405) + headers_["uri"], warning);
       return response_builder("405", "Method Not Allowed", "text/html",
                               ss.str()) +
              content;
     case 413:
       content = read_file(get_error_page_path(413));
       ss << content.length();
-      WebServer::log(std::string(HTTP_413) + request_.get_uri(), warning);
+      WebServer::log(std::string(HTTP_413) + headers_["uri"], warning);
       return response_builder("413", "Content Too Large", "text/html",
                               ss.str()) +
              content;
     case 501:
       content = read_file(get_error_page_path(501));
       ss << content.length();
-      WebServer::log(std::string(HTTP_501) + request_.get_uri(), warning);
+      WebServer::log(std::string(HTTP_501) + headers_["uri"], warning);
       return response_builder("501", "Not Implemented", "text/html", ss.str()) +
              content;
     default:
       content = read_file(get_error_page_path(500));
       ss << content.length();
-      WebServer::log(std::string(HTTP_500) + request_.get_uri(), warning);
+      WebServer::log(std::string(HTTP_500) + headers_["uri"], warning);
       return response_builder("500", "Internal Server Error", "text/html",
                               ss.str()) +
              content;
