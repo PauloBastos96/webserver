@@ -16,6 +16,8 @@ HttpHandler::~HttpHandler() {}
 
 /// @brief Process the request
 std::string HttpHandler::process_request() {
+  if (!is_method_allowed(request_.get_method()))
+    return get_error_page(405);
   if (request_.get_method() == "GET")
     return process_get();
   else if (request_.get_method() == "POST")
@@ -29,6 +31,11 @@ std::string HttpHandler::process_request() {
   return "";
 }
 
+/// @brief Check if the server should generate an autoindex page
+/// @param uri The URI of the request
+/// @param server A reference to the server
+/// @return True if the server should generate an autoindex page, false
+/// otherwise
 bool should_generate_autoindex(const std::string &uri, Server &server) {
   if (uri == "/" && server.get_config().get_auto_index())
     return true;
@@ -43,6 +50,26 @@ bool should_generate_autoindex(const std::string &uri, Server &server) {
     }
   }
   return false;
+}
+
+/// @brief Check if the method is allowed for the location
+/// @param method The method to check
+/// @return True if the method is allowed, false otherwise
+bool HttpHandler::is_method_allowed(const std::string &method) {
+  std::string location =
+      request_.get_uri().substr(0, request_.get_uri().find_last_of('/'));
+  std::vector<Location> locations = server_->get_locations();
+  for (size_t i = 0; i < locations.size(); i++) {
+    if (location == locations.at(i).get_path()) {
+      for (size_t j = 0; j < locations.at(i).get_allowed_methods().size();
+           j++) {
+        if (method == locations.at(i).get_allowed_methods().at(j))
+          return true;
+      }
+      return false;
+    }
+  }
+  return true;
 }
 
 /// @brief Process a GET request
@@ -121,8 +148,7 @@ std::string HttpHandler::get_location_path(const std::string &uri) {
   Stat buffer;
 
   for (size_t i = 0; i < locations.size(); i++) {
-    if (uri == locations.at(i)
-                   .get_path()) { // TODO might not work if file is specified
+    if (uri == locations.at(i).get_path()) {
       std::vector<std::string> indexes =
           locations.at(i).get_config().get_indexes();
       for (size_t j = 0; j < indexes.size(); j++) {
@@ -188,6 +214,10 @@ std::string HttpHandler::get_error_page_path(const int status_code) {
     return (!hasCustomErrorPage || !isValidPath)
                ? "default_pages/not_found.html"
                : path;
+  case 405:
+    return (!hasCustomErrorPage || !isValidPath)
+               ? "default_pages/not_allowed.html"
+               : path;
   case 413:
     return (!hasCustomErrorPage || !isValidPath)
                ? "default_pages/content_too_large.html"
@@ -204,7 +234,8 @@ std::string HttpHandler::get_error_page_path(const int status_code) {
 }
 
 /// @brief Get the error page for the route
-/// @param hasCustomErrorPage Set value to true if the route has a custom error page
+/// @param hasCustomErrorPage Set value to true if the route has a custom error
+/// page
 /// @param status_code The status code
 /// @param path Set the path of the error page
 void HttpHandler::get_route_error_page(bool &hasCustomErrorPage,
@@ -213,27 +244,31 @@ void HttpHandler::get_route_error_page(bool &hasCustomErrorPage,
   std::string location;
   location = request_.get_uri().substr(0, request_.get_uri().find_last_of('/'));
   std::vector<Location> locations = server_->get_locations();
-  for (size_t i = 0; i < locations.size(); i++) {
-    if (location == locations.at(i).get_path()) {
-      hasCustomErrorPage =
-          locations.at(i).get_config().get_error_pages().find(status_code) !=
-          locations.at(i).get_config().get_error_pages().end();
-      if (locations.at(i).get_config().get_root().empty())
+  try {
+    for (size_t i = 0; i < locations.size(); i++) {
+      if (location == locations.at(i).get_path()) {
+        hasCustomErrorPage =
+            locations.at(i).get_config().get_error_pages().find(status_code) !=
+            locations.at(i).get_config().get_error_pages().end();
+        if (locations.at(i).get_config().get_root().empty())
+          path = server_->get_config().get_root() +
+                 locations.at(i).get_config().get_error_pages().at(status_code);
+        else
+          path = server_->get_config().get_root() +
+                 locations.at(i).get_config().get_root() +
+                 locations.at(i).get_config().get_error_pages().at(status_code);
+        break;
+      }
+      if (i == locations.size() - 1) {
+        hasCustomErrorPage =
+            server_->get_config().get_error_pages().find(status_code) !=
+            server_->get_config().get_error_pages().end();
         path = server_->get_config().get_root() +
-               locations.at(i).get_config().get_error_pages().at(status_code);
-      else
-        path = server_->get_config().get_root() +
-               locations.at(i).get_config().get_root() +
-               locations.at(i).get_config().get_error_pages().at(status_code);
-      break;
+               server_->get_config().get_error_pages().at(status_code);
+      }
     }
-    if (i == locations.size() - 1) {
-      hasCustomErrorPage =
-          server_->get_config().get_error_pages().find(status_code) !=
-          server_->get_config().get_error_pages().end();
-      path = server_->get_config().get_root() +
-             server_->get_config().get_error_pages().at(status_code);
-    }
+  } catch (const std::out_of_range &e) {
+    hasCustomErrorPage = false;
   }
 }
 
@@ -264,6 +299,13 @@ std::string HttpHandler::get_error_page(const int status_code) {
       ss << content.length();
       WebServer::log(std::string(HTTP_404) + request_.get_uri(), warning);
       return response_builder("404", "Not Found", "text/html", ss.str()) +
+             content;
+    case 405:
+      content = read_file(get_error_page_path(405));
+      ss << content.length();
+      WebServer::log(std::string(HTTP_405) + request_.get_uri(), warning);
+      return response_builder("405", "Method Not Allowed", "text/html",
+                              ss.str()) +
              content;
     case 413:
       content = read_file(get_error_page_path(413));

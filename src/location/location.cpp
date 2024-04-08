@@ -24,7 +24,7 @@ std::vector<std::string> &Location::get_allowed_methods() {
 
 void Location::set_path(const std::string &path) { path_ = path; }
 
-void Location::set_allowed_methods(const std::string &method) {
+void Location::add_allowed_methods(const std::string &method) {
     allowed_methods_.push_back(method);
 }
 

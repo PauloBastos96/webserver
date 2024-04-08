@@ -52,6 +52,8 @@ private:
 
   bool is_text_file(const std::string &file_path);
 
+  bool is_method_allowed(const std::string &method);
+
   size_t get_max_size(const std::string &max_size);
 };
 
