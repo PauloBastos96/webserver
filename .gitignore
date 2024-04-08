@@ -5,3 +5,4 @@ webserv
 .vscode
 .clang-format
 .idea
+client/client
