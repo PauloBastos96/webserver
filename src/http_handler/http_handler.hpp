@@ -16,17 +16,17 @@ public:
 
   ~HttpHandler();
 
-  const std::string process_request();
+    std::string process_request();
 
 private:
   HttpParser request_;
   Server *server_;
 
-  const std::string process_get();
+    std::string process_get();
 
-  const std::string process_post();
+    std::string process_post();
 
-  const std::string process_delete();
+    std::string process_delete();
 
   std::string response_builder(const std::string &status_code,
                                const std::string &status_message,

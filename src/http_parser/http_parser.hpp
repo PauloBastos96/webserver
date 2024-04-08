@@ -18,13 +18,14 @@ class HttpParser {
     std::string content_type_;
     std::string content_length_;
 
-    //Setters
+    // Setters
     void set_method_and_uri(const std::string &request);
     void set_host(const std::string &request);
     void set_accept(const std::string &request);
     void set_body(const std::string &request);
     void set_content_type(const std::string &request);
     void set_content_length(const std::string &request);
+
   public:
     HttpParser(const std::string &request);
     ~HttpParser(void);

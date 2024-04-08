@@ -15,7 +15,7 @@ HttpHandler::~HttpHandler() {}
 #pragma region HTTP Methods
 
 /// @brief Process the request
-const std::string HttpHandler::process_request() {
+std::string HttpHandler::process_request() {
   if (request_.get_method() == "GET")
     return process_get();
   else if (request_.get_method() == "POST")
@@ -47,7 +47,7 @@ bool should_generate_autoindex(const std::string &uri, Server &server) {
 }
 
 /// @brief Process a GET request
-const std::string HttpHandler::process_get() {
+std::string HttpHandler::process_get() {
   std::fstream file;
   std::string content;
   std::string file_path;
@@ -82,31 +82,32 @@ const std::string HttpHandler::process_get() {
 }
 
 /// @brief Process a POST request
-const std::string HttpHandler::process_post() {
-  size_t max_size =
-      get_max_size(server_->get_config().get_max_client_body_size());
-  std::cout << request_.get_request() << std::endl;
-  if (request_.get_body().size() > max_size)
-    return get_error_page(413);
-  std::string response = request_.get_body();
-  std::stringstream ss;
-  ss << response.length();
-  return response_builder("201", "Created", "text/plain", ss.str()) + response;
+std::string HttpHandler::process_post() {
+    size_t max_size =
+        get_max_size(server_->get_config().get_max_client_body_size());
+    std::cout << request_.get_request() << std::endl;
+    if (request_.get_body().size() > max_size)
+        return get_error_page(413);
+    std::string response = "Received" + request_.get_body();
+    std::stringstream ss;
+    ss << response.length();
+    return response_builder("201", "Created", "text/plain", ss.str()) +
+           response;
 }
 
 /// @brief Process a DELETE request
-const std::string HttpHandler::process_delete() {
-  std::string file_path;
-  Stat buffer;
+std::string HttpHandler::process_delete() {
+    std::string file_path;
+    Stat buffer;
 
-  file_path = server_->get_config().get_root() + request_.get_uri();
-  if (stat(file_path.c_str(), &buffer) != 0)
-    return get_error_page(404);
-  if (!(buffer.st_mode & S_IWOTH))
-    return get_error_page(403);
-  if (std::remove(file_path.c_str()))
-    return get_error_page(403);
-  return response_builder("204", "No Content", "text/plain", "0");
+    file_path = server_->get_config().get_root() + request_.get_uri();
+    if (stat(file_path.c_str(), &buffer) != 0)
+        return get_error_page(404);
+    if (!(buffer.st_mode & S_IWOTH))
+        return get_error_page(403);
+    if (std::remove(file_path.c_str()))
+        return get_error_page(403);
+    return response_builder("204", "No Content", "text/plain", "0");
 }
 
 #pragma endregion
@@ -286,28 +287,28 @@ const std::string HttpHandler::create_autoindex(const std::string &path,
 /// @param max_size The maximum size set in the configuration file
 /// @return The maximum size of the client body in bytes
 size_t HttpHandler::get_max_size(const std::string &max_size) {
-  size_t size = 0;
-  char unit;
+    size_t size = 0;
+    char unit;
 
-  if (isalpha(*(max_size.end() - 1)))
-    unit = std::tolower(*(max_size.end() - 1));
-  else
-    unit = 'b';
-  switch (unit) {
-  case 'k':
-    size = std::atoi(max_size.c_str()) * 1024;
-    break;
-  case 'm':
-    size = std::atoi(max_size.c_str()) * 1024 * 1024;
-    break;
-  case 'g':
-    size = std::atoi(max_size.c_str()) * 1024 * 1024 * 1024;
-    break;
-  default:
-    size = std::atoi(max_size.c_str());
-    break;
-  }
-  return size;
+    if (isalpha(*(max_size.end() - 1)))
+        unit = std::tolower(*(max_size.end() - 1));
+    else
+        unit = 'b';
+    switch (unit) {
+    case 'k':
+        size = std::atoi(max_size.c_str()) * 1024;
+        break;
+    case 'm':
+        size = std::atoi(max_size.c_str()) * 1024 * 1024;
+        break;
+    case 'g':
+        size = std::atoi(max_size.c_str()) * 1024 * 1024 * 1024;
+        break;
+    default:
+        size = std::atoi(max_size.c_str());
+        break;
+    }
+    return size;
 }
 
 /// @brief Build the response header
@@ -369,27 +370,27 @@ bool HttpHandler::is_text_file(const std::string &file_path) {
 /// @param file_path The path of the file
 /// @return The content type of the file
 std::string HttpHandler::get_content_type(const std::string &file_path) {
-  const std::string extension =
-      file_path.substr(file_path.find_last_of('.') + 1);
-  if (extension == "html" || extension == "css")
-    return ("text/" + extension);
-  if (extension == "js")
-    return ("text/javascript");
-  if (extension == "jpeg" || extension == "jpg")
-    return ("image/jpeg");
-  if (extension == "png")
-    return ("image/png");
-  if (extension == "gif")
-    return ("image/gif");
-  if (extension == "svg")
-    return ("image/svg+xml");
-  if (extension == "json")
-    return ("application/json");
-  if (extension == "xml")
-    return ("application/xml");
-  if (extension == "form")
-    return ("application/x-www-form-urlencoded");
-  return ("text/plain");
+    const std::string extension =
+        file_path.substr(file_path.find_last_of('.') + 1);
+    if (extension == "html" || extension == "css")
+        return ("text/" + extension);
+    if (extension == "js")
+        return ("text/javascript");
+    if (extension == "jpeg" || extension == "jpg")
+        return ("image/jpeg");
+    if (extension == "png")
+        return ("image/png");
+    if (extension == "gif")
+        return ("image/gif");
+    if (extension == "svg")
+        return ("image/svg+xml");
+    if (extension == "json")
+        return ("application/json");
+    if (extension == "xml")
+        return ("application/xml");
+    if (extension == "form")
+        return ("application/x-www-form-urlencoded");
+    return ("text/plain");
 }
 
 #pragma endregion

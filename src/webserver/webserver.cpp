@@ -86,7 +86,8 @@ void WebServer::insert_epoll(const int socket) const {
 
 /// @brief Check if the socket is a server socket
 /// @param socket The socket to check
-/// @return True if the socket is a server socket, false if it's a client socket
+/// @return True if the socket is a server socket, false if it's a client
+/// socket
 bool WebServer::is_server(int socket) {
     for (std::vector<Server>::iterator server_it = servers_.begin();
          server_it != servers_.end(); ++server_it) {
@@ -120,18 +121,19 @@ std::vector<Server>::iterator WebServer::find_server(const int socket) {
 /// @brief Send the response to the client
 /// @param socket The client socket
 /// @param response The response to send
-void WebServer::send_response(const int socket, std::string &response) const {
-    if (response.empty())
+void WebServer::send_response(const int socket) {
+    if (responses_[socket].empty())
         return;
-    size_t bytes_sent = 0;
-    while (bytes_sent < response.length()) { //!Must go through poll every time
-        ssize_t sent = send(socket, response.c_str() + bytes_sent,
-                            response.length() - bytes_sent, 0);
-        if (sent == -1)
-            WebServer::log("Failed to send response to the client", error);
-        bytes_sent += sent;
-    }
-    response.clear();
+    ssize_t sent = send(socket, responses_[socket].c_str(),
+                        responses_[socket].length(), 0);
+    if (sent == -1)
+        WebServer::log("Failed to send response to the client", error);
+    if (static_cast<unsigned long>(sent) < responses_[socket].length()) {
+        responses_[socket] = responses_[socket].c_str() + sent;
+        WebServer::log("Failed to send the entire response to the client",
+                       error);
+    } else
+        responses_[socket].clear();
 }
 
 /// @brief Accept a new client connection
@@ -157,8 +159,7 @@ void WebServer::accept_connection(Server &server, const int socket) const {
 /// @param server The server that the client is connected to
 /// @param socket The client socket
 /// @return The response to send to the client
-std::string WebServer::handle_connection(Server &server,
-                                         const int socket) const {
+void WebServer::handle_connection(Server &server, const int socket) {
     char buffer[BUFFER_SIZE];
     const ssize_t bytes_received = recv(socket, buffer, BUFFER_SIZE, 0);
     if (!bytes_received || bytes_received == -1) {
@@ -166,17 +167,17 @@ std::string WebServer::handle_connection(Server &server,
         log(!bytes_received ? "Client disconnected"
                             : "Failed to receive data from the client",
             info);
-        return "";
+        return;
     }
     const std::string data_received(buffer);
     HttpHandler http_handler(data_received, server);
-    return http_handler.process_request();
+    responses_[socket] = http_handler.process_request();
 }
 
 /// @brief Close the connection with the client
 /// @param server The server that the client is connected to
 /// @param socket The client socket to close
-void WebServer::end_connection(Server &server, int socket) const {
+void WebServer::end_connection(Server &server, int socket) {
     std::stringstream ss;
     ss << socket;
     if (epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, socket, NULL) == -1)
@@ -187,12 +188,12 @@ void WebServer::end_connection(Server &server, int socket) const {
                   server.get_connected_clients().end(), socket);
     if (client_it != server.get_connected_clients().end())
         server.get_connected_clients().erase(client_it);
+    responses_.erase(socket);
 }
 
 /// @brief The main server loop
 void WebServer::server_routine() {
     setup_server_sockets();
-    std::string response;
     while (is_running) {
         try {
             const int num_events =
@@ -208,19 +209,17 @@ void WebServer::server_routine() {
                         log("Failed to find server", error);
                         continue;
                     }
-                    if (is_server(socket))
-                        accept_connection(*server_it, socket);
-                    else
-                        response = handle_connection(*server_it, socket);
+                    is_server(socket) ? accept_connection(*server_it, socket)
+                                      : handle_connection(*server_it, socket);
                 }
                 if (events_[i].events & EPOLLOUT)
-                    send_response(socket, response);
+                    send_response(socket);
                 if (events_[i].events & EPOLLERR ||
                     events_[i].events & EPOLLHUP) {
                     const std::vector<Server>::iterator server_it =
                         find_server(socket);
                     log("EPOLLERR || EPOLLUP", warning);
-                    (server_it != servers_.end())
+                    server_it != servers_.end()
                         ? end_connection(*server_it, socket)
                         : log("Client already removed", error);
                 }
