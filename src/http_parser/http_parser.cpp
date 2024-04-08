@@ -33,4 +33,6 @@ HttpParser::HttpParser(const string &request) {
 
 HttpParser::~HttpParser() {}
 
-std::map<string, string> HttpParser::get_headers() const { return (headers_); }
+const std::map<string, string> &HttpParser::get_headers() const {
+    return headers_;
+}
