@@ -41,16 +41,16 @@ private:
 
   std::string get_error_page_path(const int status_code);
 
+  void get_route_error_page(bool &hasCustomErrorPage, const int status_code, std::string &path);
+
   std::string get_file_path(const std::string &uri);
 
   std::string get_location_path(const std::string &uri);
 
   const std::string create_autoindex(const std::string &path,
-                                     const std::string &uri);
+									 const std::string &uri);
 
   bool is_text_file(const std::string &file_path);
-
-  bool is_valid_but_not_supported(const std::string &method);
 
   size_t get_max_size(const std::string &max_size);
 };
