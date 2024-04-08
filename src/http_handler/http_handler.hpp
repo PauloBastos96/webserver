@@ -16,17 +16,17 @@ public:
 
   ~HttpHandler();
 
-    std::string process_request();
+  std::string process_request();
 
 private:
-  HttpParser request_;
   Server *server_;
+  std::map<std::string, std::string> headers_;
 
-    std::string process_get();
+  std::string process_get();
 
-    std::string process_post();
+  std::string process_post();
 
-    std::string process_delete();
+  std::string process_delete();
 
   std::string response_builder(const std::string &status_code,
                                const std::string &status_message,
@@ -41,6 +41,9 @@ private:
 
   std::string get_error_page_path(const int status_code);
 
+  void get_route_error_page(bool &hasCustomErrorPage, const int status_code,
+                            std::string &path);
+
   std::string get_file_path(const std::string &uri);
 
   std::string get_location_path(const std::string &uri);
@@ -50,7 +53,7 @@ private:
 
   bool is_text_file(const std::string &file_path);
 
-  bool is_valid_but_not_supported(const std::string &method);
+  bool is_method_allowed(const std::string &method);
 
   size_t get_max_size(const std::string &max_size);
 };

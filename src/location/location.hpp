@@ -30,7 +30,7 @@ class Location {
 
     void set_path(const std::string &path);
 
-    void set_allowed_methods(const std::string &method);
+    void add_allowed_methods(const std::string &method);
 
 #pragma endregion
 
