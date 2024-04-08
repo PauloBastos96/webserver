@@ -46,6 +46,7 @@ enum log_level {
 // HTTP status codes
 
 #define HTTP_200 "[200] OK |   URI:"
+#define HTTP_400 "[400] Bad Request  |   URI:"
 #define HTTP_403 "[403] Forbidden  |   URI:"
 #define HTTP_404 "[404] Not Found  |   URI:"
 #define HTTP_413 "[413] Content Too Large  |   URI:"
