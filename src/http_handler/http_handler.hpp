@@ -10,6 +10,11 @@
 
 typedef struct stat Stat;
 
+enum redirectionType {
+    REDIRECT_307,
+    REDIRECT_308
+};
+
 class HttpHandler {
   public:
     HttpHandler(const std::string &request, Server &server);
@@ -54,6 +59,8 @@ class HttpHandler {
     bool is_text_file(const std::string &file_path);
 
     bool is_method_allowed(const std::string &method);
+
+    bool has_redirection(const std::string &uri);
 
     size_t get_max_size(const std::string &max_size);
 };

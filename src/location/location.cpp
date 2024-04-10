@@ -2,7 +2,7 @@
 
 #pragma region Constructors &Destructors
 
-Location::Location() { config_.set_auto_index(false); }
+Location::Location() : config_() { config_.set_auto_index(false); }
 
 Location::~Location() {}
 
