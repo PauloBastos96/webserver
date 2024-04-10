@@ -19,15 +19,15 @@ HttpHandler::~HttpHandler() {}
 
 /// @brief Process the request
 std::string HttpHandler::process_request() {
-    if (!is_method_allowed(headers_["method"]))
+    if (!is_method_allowed(headers_.at("method")))
         return get_error_page(405);
-    if (headers_["method"] == "GET")
+    if (headers_.at("method") == "GET")
         return process_get();
-    else if (headers_["method"] == "POST")
+    else if (headers_.at("method") == "POST")
         return process_post();
-    else if (headers_["method"] == "DELETE")
+    else if (headers_.at("method") == "DELETE")
         return process_delete();
-    else if (IS_VALID_BUT_NOT_SUPPORTED(headers_["method"]))
+    else if (IS_VALID_BUT_NOT_SUPPORTED(headers_.at("method")))
         return get_error_page(501);
     else
         return get_error_page(400);
@@ -60,7 +60,7 @@ bool should_generate_autoindex(const std::string &uri, Server &server) {
 /// @return True if the method is allowed, false otherwise
 bool HttpHandler::is_method_allowed(const std::string &method) {
     std::string location =
-        headers_["uri"].substr(0, headers_["uri"].find_last_of('/'));
+        headers_.at("uri").substr(0, headers_.at("uri").find_last_of('/'));
     std::vector<Location> locations = server_->get_locations();
     for (size_t i = 0; i < locations.size(); i++) {
         if (location == locations.at(i).get_path()) {
@@ -84,17 +84,17 @@ std::string HttpHandler::process_get() {
     Stat buffer;
 
     try {
-        file_path = get_file_path(headers_["uri"]);
-        if (*(headers_["uri"].end() - 1) == '/' &&
+        file_path = get_file_path(headers_.at("uri"));
+        if (*(headers_.at("uri").end() - 1) == '/' &&
             server_->get_config().get_auto_index()) {
-            file_path = server_->get_config().get_root() + headers_["uri"];
-            content = create_autoindex(file_path, headers_["uri"]);
+            file_path = server_->get_config().get_root() + headers_.at("uri");
+            content = create_autoindex(file_path, headers_.at("uri"));
             if (content.empty())
                 return get_error_page(404);
             ss << content.length();
             std::string response =
                 response_builder("200", "OK", "text/html", ss.str());
-            WebServer::log(std::string(HTTP_200) + headers_["uri"], info);
+            WebServer::log(std::string(HTTP_200) + headers_.at("uri"), info);
             return response + content;
         }
         if (stat(file_path.c_str(), &buffer) != 0 || S_ISDIR(buffer.st_mode))
@@ -103,7 +103,7 @@ std::string HttpHandler::process_get() {
         ss << content.length();
         std::string response = response_builder(
             "200", "OK", get_content_type(file_path), ss.str());
-        WebServer::log(std::string(HTTP_200) + headers_["uri"], info);
+        WebServer::log(std::string(HTTP_200) + headers_.at("uri"), info);
         return response + content;
     } catch (const std::runtime_error &e) {
         return get_error_page(404);
@@ -114,9 +114,9 @@ std::string HttpHandler::process_get() {
 std::string HttpHandler::process_post() {
     size_t max_size =
         get_max_size(server_->get_config().get_max_client_body_size());
-    if (headers_["body"].size() > max_size)
+    if (headers_.at("body").size() > max_size)
         return get_error_page(413);
-    std::string response = "Received" + headers_["body"];
+    std::string response = "Received" + headers_.at("body");
     std::stringstream ss;
     ss << response.length();
     return response_builder("201", "Created", "text/plain", ss.str()) +
@@ -128,7 +128,7 @@ std::string HttpHandler::process_delete() {
     std::string file_path;
     Stat buffer;
 
-    file_path = server_->get_config().get_root() + headers_["uri"];
+    file_path = server_->get_config().get_root() + headers_.at("uri");
     if (stat(file_path.c_str(), &buffer) != 0)
         return get_error_page(404);
     if (!(buffer.st_mode & S_IWOTH))
@@ -198,7 +198,7 @@ std::string HttpHandler::get_file_path(const std::string &uri) {
 /// @param status_code The status code
 /// @return The path of the error page
 std::string HttpHandler::get_error_page_path(const int status_code) {
-    std::string path = "";
+    std::string path;
     std::string location;
     Stat buffer;
     bool hasCustomErrorPage = false;
@@ -247,7 +247,7 @@ void HttpHandler::get_route_error_page(bool &hasCustomErrorPage,
                                        const int status_code,
                                        std::string &path) {
     std::string location;
-    location = headers_["uri"].substr(0, headers_["uri"].find_last_of('/'));
+    location = headers_.at("uri").substr(0, headers_.at("uri").find_last_of('/'));
     std::vector<Location> locations = server_->get_locations();
     try {
         for (size_t i = 0; i < locations.size(); i++) {
@@ -293,47 +293,47 @@ std::string HttpHandler::get_error_page(const int status_code) {
         case 400:
             content = read_file(get_error_page_path(400));
             ss << content.length();
-            WebServer::log(std::string(HTTP_400) + headers_["uri"], warning);
+            WebServer::log(std::string(HTTP_400) + headers_.at("uri"), warning);
             return response_builder("400", "Bad Request", "text/html",
                                     ss.str()) +
                    content;
         case 403:
             content = read_file(get_error_page_path(403));
             ss << content.length();
-            WebServer::log(std::string(HTTP_403) + headers_["uri"], warning);
+            WebServer::log(std::string(HTTP_403) + headers_.at("uri"), warning);
             return response_builder("403", "Forbidden", "text/html", ss.str()) +
                    content;
         case 404:
             content = read_file(get_error_page_path(404));
             ss << content.length();
-            WebServer::log(std::string(HTTP_404) + headers_["uri"], warning);
+            WebServer::log(std::string(HTTP_404) + headers_.at("uri"), warning);
             return response_builder("404", "Not Found", "text/html", ss.str()) +
                    content;
         case 405:
             content = read_file(get_error_page_path(405));
             ss << content.length();
-            WebServer::log(std::string(HTTP_405) + headers_["uri"], warning);
+            WebServer::log(std::string(HTTP_405) + headers_.at("uri"), warning);
             return response_builder("405", "Method Not Allowed", "text/html",
                                     ss.str()) +
                    content;
         case 413:
             content = read_file(get_error_page_path(413));
             ss << content.length();
-            WebServer::log(std::string(HTTP_413) + headers_["uri"], warning);
+            WebServer::log(std::string(HTTP_413) + headers_.at("uri"), warning);
             return response_builder("413", "Content Too Large", "text/html",
                                     ss.str()) +
                    content;
         case 501:
             content = read_file(get_error_page_path(501));
             ss << content.length();
-            WebServer::log(std::string(HTTP_501) + headers_["uri"], warning);
+            WebServer::log(std::string(HTTP_501) + headers_.at("uri"), warning);
             return response_builder("501", "Not Implemented", "text/html",
                                     ss.str()) +
                    content;
         default:
             content = read_file(get_error_page_path(500));
             ss << content.length();
-            WebServer::log(std::string(HTTP_500) + headers_["uri"], warning);
+            WebServer::log(std::string(HTTP_500) + headers_.at("uri"), warning);
             return response_builder("500", "Internal Server Error", "text/html",
                                     ss.str()) +
                    content;
@@ -391,7 +391,7 @@ size_t HttpHandler::get_max_size(const std::string &max_size) {
     char unit;
 
     if (isalpha(*(max_size.end() - 1)))
-        unit = std::tolower(*(max_size.end() - 1));
+        unit = static_cast<char>(std::tolower(*(max_size.end() - 1)));
     else
         unit = 'b';
     switch (unit) {
