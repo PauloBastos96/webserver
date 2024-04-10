@@ -38,6 +38,8 @@ class HttpHandler {
                                  const std::string &content_type,
                                  const std::string &content_length = "0");
 
+    std::string create_redirection_response();
+
     std::string read_file(const std::string &file_path);
 
     std::string get_content_type(const std::string &file_path);

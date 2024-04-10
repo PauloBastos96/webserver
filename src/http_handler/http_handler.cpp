@@ -30,9 +30,18 @@ bool HttpHandler::has_redirection(const std::string &uri) {
   return false;
 }
 
-std::string create_redirection_response(const std::string &redirection) {
+std::string HttpHandler::create_redirection_response() {
   enum redirectionType type;
   std::string response;
+  std::string redirection;
+
+  redirection = server_->get_config().get_redirection();
+  for (size_t i = 0; i < server_->get_locations().size(); i++) {
+    if (headers_.at("uri") == server_->get_locations().at(i).get_path()) {
+      redirection = server_->get_locations().at(i).get_config().get_redirection();
+      break;
+    }
+  }
   if (redirection.substr(redirection.find_last_of(' ')) == "redirect")
     type = REDIRECT_307;
   else
@@ -54,7 +63,7 @@ std::string HttpHandler::process_request() {
   if (!is_method_allowed(headers_.at("method")))
     return get_error_page(405);
   if (has_redirection(headers_.at("uri")))
-    return create_redirection_response(server_->get_config().get_redirection());
+    return create_redirection_response();
   if (headers_.at("method") == "GET")
     return process_get();
   else if (headers_.at("method") == "POST")
