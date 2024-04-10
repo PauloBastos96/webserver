@@ -13,16 +13,6 @@ Config::~Config() {}
 
 Config::Config(const Config &other) { *this = other; }
 
-Config &Config::operator=(const Config &other) {
-  if (this == &other)
-    return (*this);
-  root_ = other.root_;
-  indexes_ = other.indexes_;
-  error_pages_ = other.error_pages_;
-  max_client_body_size_ = other.max_client_body_size_;
-  auto_index_ = other.auto_index_;
-  return (*this);
-}
 #pragma endregion
 
 #pragma region Setters
@@ -162,6 +152,8 @@ void Config::location(std::string line, Server &server, std::ifstream &file) {
     }
   }
   server.get_locations().push_back(location);
+  int i = 0;
+  i++;
 }
 
 /// @brief Parse the limit_except block from the config file and add it to the

@@ -42,7 +42,6 @@ class Config {
 
     Config(const Config &other);
 
-    Config &operator=(const Config &other);
 
 #pragma endregion
 
