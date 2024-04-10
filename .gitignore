@@ -6,3 +6,4 @@ webserv
 .clang-format
 .idea
 client/client
+.vs

@@ -48,7 +48,9 @@ const std::string &Config::get_root() { return (root_); }
 
 std::vector<std::string> &Config::get_indexes() { return (indexes_); }
 
-std::map<uint, std::string> &Config::get_error_pages() { return (error_pages_); }
+std::map<uint, std::string> &Config::get_error_pages() {
+    return (error_pages_);
+}
 
 const std::string &Config::get_max_client_body_size() {
     return (max_client_body_size_);
@@ -294,9 +296,11 @@ void Config::display_configs(std::vector<Server> &servers) {
                       << std::endl;
             std::cout << "	"
                       << "Index: ";
-            for (size_t k = 0;
-                 k <
-                 servers[i].get_locations()[j].get_config().get_indexes().size();
+            for (size_t k = 0; k < servers[i]
+                                       .get_locations()[j]
+                                       .get_config()
+                                       .get_indexes()
+                                       .size();
                  k++) {
                 std::cout << servers[i]
                                  .get_locations()[j]
