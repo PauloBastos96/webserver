@@ -34,6 +34,11 @@ void Config::set_auto_index(const bool &autoindex) { auto_index_ = autoindex; }
 
 void Config::set_redirection(const std::string &redirection) {
   redirection_ = redirection;
+  if (redirection_.at(redirection_.size() - 1) == ';')
+    redirection_.erase(redirection_.size() - 1);
+  std::string type = redirection_.substr(redirection_.find_last_of(' ') + 1);
+  if (type != "permanent" && type != "redirect")
+    WebServer::log(ERR_CFG_REWRITE, error);
 }
 #pragma endregion
 

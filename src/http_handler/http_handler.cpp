@@ -38,11 +38,12 @@ std::string HttpHandler::create_redirection_response() {
   redirection = server_->get_config().get_redirection();
   for (size_t i = 0; i < server_->get_locations().size(); i++) {
     if (headers_.at("uri") == server_->get_locations().at(i).get_path()) {
-      redirection = server_->get_locations().at(i).get_config().get_redirection();
+      redirection =
+          server_->get_locations().at(i).get_config().get_redirection();
       break;
     }
   }
-  if (redirection.substr(redirection.find_last_of(' ')) == "redirect")
+  if (redirection.substr(redirection.find_last_of(' ') + 1) == "redirect")
     type = REDIRECT_307;
   else
     type = REDIRECT_308;
@@ -52,7 +53,10 @@ std::string HttpHandler::create_redirection_response() {
     response = "HTTP/1.1 308 Permanent Redirect\r\n";
   response +=
       "Location: " + redirection.substr(0, redirection.find_last_of(' ')) +
-      "\r\n\r\n";
+      "\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n";
+  WebServer::log(std::string(type == REDIRECT_307 ? HTTP_307 : HTTP_308) +
+                     headers_.at("uri"),
+                 info);
   return response;
 }
 
