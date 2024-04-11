@@ -37,15 +37,18 @@ enum log_level {
 #define ERR_CFG_MISSING_BRACKET "[CONFIG] Missing closing bracket"
 #define ERR_CANT_OPEN_FILE "[CONFIG] Could not open file "
 #define ERR_CFG_INVALID_ERROR_PAGE "[CONFIG] Invalid error page directive"
+#define ERR_CFG_REWRITE "[CONFIG] Invalid rewrite directive"
 #define ERR_SOCKET "Failed to create socket for server: "
-#define ERR_BIND "Failed to bind socket for server: "
-#define ERR_LISTEN "Failed to listen on socket for server: "
+#define ERR_BIND "Failed to bind the server socket"
+#define ERR_LISTEN "Failed to listen on the server socket"
 
 #pragma endregion
 
 // HTTP status codes
 
 #define HTTP_200 "[200] OK |   URI:"
+#define HTTP_307 "[307] Temporary Redirect  |   URI:"
+#define HTTP_308 "[308] Permanent Redirect  |   URI:"
 #define HTTP_400 "[400] Bad Request  |   URI:"
 #define HTTP_403 "[403] Forbidden  |   URI:"
 #define HTTP_404 "[404] Not Found  |   URI:"

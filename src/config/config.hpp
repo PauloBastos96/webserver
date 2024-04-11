@@ -42,7 +42,6 @@ class Config {
 
     Config(const Config &other);
 
-    Config &operator=(const Config &other);
 
 #pragma endregion
 
@@ -56,7 +55,9 @@ class Config {
 
     const std::string &get_max_client_body_size();
 
-    const bool &get_auto_index() const;
+    const bool &get_auto_index();
+
+    const std::string &get_redirection();
 
 #pragma endregion
 
@@ -72,6 +73,8 @@ class Config {
 
     void set_auto_index(const bool &autoindex);
 
+    void set_redirection(const std::string &redirection);
+
 #pragma endregion
 
   private:
@@ -79,6 +82,7 @@ class Config {
     std::vector<std::string> indexes_;
     std::map<uint, std::string> error_pages_;
     std::string max_client_body_size_;
+    std::string redirection_;
     bool auto_index_;
 };
 
