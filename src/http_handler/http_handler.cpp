@@ -1,13 +1,9 @@
 #include "http_handler.hpp"
-#include "webserver.hpp"
 #include "error_page_handler.hpp"
 #include "utils.hpp"
-#include <dirent.h>
-#include <fstream>
+#include "webserver.hpp"
 #include <iostream>
-#include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 
 HttpHandler::HttpHandler(const std::string &request, Server &server)
     : server_(&server) {
@@ -48,10 +44,9 @@ std::string HttpHandler::process_get() {
   Stat buffer;
   try {
     file_path = get_file_path(headers_.at("uri"));
-    if (*(headers_.at("uri").end() - 1) == '/' &&
-        server_->get_config().get_auto_index()) {
+    if (Utils::should_generate_autoindex(headers_.at("uri"), *server_)) {
       file_path = server_->get_config().get_root() + headers_.at("uri");
-      content = create_autoindex(file_path, headers_.at("uri"));
+      content = Utils::create_autoindex(file_path, headers_.at("uri"));
       if (content.empty())
         return error_page_handler_.get_error_page(404);
       ss << content.length();
@@ -64,8 +59,8 @@ std::string HttpHandler::process_get() {
       throw std::runtime_error("404");
     content = Utils::read_file(file_path);
     ss << content.length();
-    std::string response =
-        Utils::response_builder("200", "OK", get_content_type(file_path), ss.str());
+    std::string response = Utils::response_builder(
+        "200", "OK", Utils::get_content_type(file_path), ss.str());
     WebServer::log(std::string(HTTP_200) + headers_.at("uri"), info);
     return response + content;
   } catch (const std::runtime_error &e) {
@@ -76,13 +71,14 @@ std::string HttpHandler::process_get() {
 /// @brief Process a POST request
 std::string HttpHandler::process_post() {
   size_t max_size =
-      get_max_size(server_->get_config().get_max_client_body_size());
+      Utils::get_max_size(server_->get_config().get_max_client_body_size());
   if (headers_.at("body").size() > max_size)
     return error_page_handler_.get_error_page(413);
   std::string response = "Received" + headers_.at("body");
   std::stringstream ss;
   ss << response.length();
-  return Utils::response_builder("201", "Created", "text/plain", ss.str()) + response;
+  return Utils::response_builder("201", "Created", "text/plain", ss.str()) +
+         response;
 }
 
 /// @brief Process a DELETE request
@@ -171,27 +167,6 @@ bool HttpHandler::is_method_allowed(const std::string &method) {
   return true;
 }
 
-/// @brief Check if the server should generate an autoindex page
-/// @param uri The URI of the request
-/// @param server A reference to the server
-/// @return True if the server should generate an autoindex page, false
-/// otherwise
-bool should_generate_autoindex(const std::string &uri, Server &server) {
-  if (uri == "/" && server.get_config().get_auto_index())
-    return true;
-  else if (*(uri.end() - 1) == '/') {
-    std::vector<Location> locations = server.get_locations();
-    if (locations.empty() && server.get_config().get_auto_index())
-      return true;
-    for (size_t i = 0; i < locations.size(); i++) {
-      if (uri == locations.at(i).get_path() &&
-          locations.at(i).get_config().get_auto_index())
-        return true;
-    }
-  }
-  return false;
-}
-
 /// @brief Get the path of the location
 /// @param uri The URI of the request
 /// @return The path of the location
@@ -240,98 +215,5 @@ std::string HttpHandler::get_file_path(const std::string &uri) {
       file_path = get_location_path(uri);
   }
   return file_path;
-}
-
-/// @brief Create an autoindex page
-/// @param path The path of the directory
-/// @param uri The URI of the directory
-/// @return The autoindex page content
-const std::string HttpHandler::create_autoindex(const std::string &path,
-                                                const std::string &uri) {
-  std::string autoindex;
-  autoindex = "<!DOCTYPE html>\n<html>\n<head>\n<title>Index of " + uri +
-              "</title>\n<link rel=\"stylesheet\" href=\"/styles.css\"> "
-              "\n</head>\n<body>\n<h1 id=\"autoindex\">Index of " +
-              uri + "</h1>\n";
-  autoindex += "<table>\n<tr>\n<th>Name</th>\n<th>Last Modified</th>\n";
-  autoindex += "<th>Size</th>\n</tr>\n";
-  DIR *dir;
-  struct dirent *ent;
-  if ((dir = opendir(path.c_str())) != NULL) {
-    while ((ent = readdir(dir)) != NULL) {
-      struct stat st;
-      std::stringstream ss;
-      std::string file_path = path + "/" + std::string(ent->d_name);
-      stat(file_path.c_str(), &st);
-      ss << st.st_size;
-      std::string itemName = S_ISDIR(st.st_mode)
-                                 ? std::string(ent->d_name) + "/"
-                                 : std::string(ent->d_name);
-      autoindex +=
-          "<tr>\n<td><a href=\"" + itemName + "\">" + itemName + "</a></td>\n";
-      autoindex += "<td>" + std::string(ctime(&st.st_mtime)) + "</td>\n";
-      autoindex += "<td>" + ss.str() + " B</td>\n</tr>\n";
-    }
-    closedir(dir);
-  } else {
-    return "";
-  }
-  autoindex += "</table>\n</body>\n</html>";
-  return autoindex;
-}
-
-/// @brief Get the maximum size of the client body
-/// @param max_size The maximum size set in the configuration file
-/// @return The maximum size of the client body in bytes
-size_t HttpHandler::get_max_size(const std::string &max_size) {
-  size_t size = 0;
-  char unit;
-
-  if (isalpha(*(max_size.end() - 1)))
-    unit = static_cast<char>(std::tolower(*(max_size.end() - 1)));
-  else
-    unit = 'b';
-  switch (unit) {
-  case 'k':
-    size = std::atoi(max_size.c_str()) * 1024;
-    break;
-  case 'm':
-    size = std::atoi(max_size.c_str()) * 1024 * 1024;
-    break;
-  case 'g':
-    size = std::atoi(max_size.c_str()) * 1024 * 1024 * 1024;
-    break;
-  default:
-    size = std::atoi(max_size.c_str());
-    break;
-  }
-  return size;
-}
-
-/// @brief Get the content type of a file
-/// @param file_path The path of the file
-/// @return The content type of the file
-std::string HttpHandler::get_content_type(const std::string &file_path) {
-  const std::string extension =
-      file_path.substr(file_path.find_last_of('.') + 1);
-  if (extension == "html" || extension == "css")
-    return ("text/" + extension);
-  if (extension == "js")
-    return ("text/javascript");
-  if (extension == "jpeg" || extension == "jpg")
-    return ("image/jpeg");
-  if (extension == "png")
-    return ("image/png");
-  if (extension == "gif")
-    return ("image/gif");
-  if (extension == "svg")
-    return ("image/svg+xml");
-  if (extension == "json")
-    return ("application/json");
-  if (extension == "xml")
-    return ("application/xml");
-  if (extension == "form")
-    return ("application/x-www-form-urlencoded");
-  return ("text/plain");
 }
 #pragma endregion

@@ -1,7 +1,11 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
+#include "server.hpp"
 #include <string>
+#include <sys/stat.h>
+
+typedef struct stat Stat;
 
 class Utils {
 private:
@@ -16,6 +20,11 @@ public:
                                       const std::string &status_message,
                                       const std::string &content_type,
                                       const std::string &content_length = "0");
+  static std::string get_content_type(const std::string &file_path);
+  static size_t get_max_size(const std::string &max_size);
+  static bool should_generate_autoindex(const std::string &uri, Server &server);
+  static const std::string create_autoindex(const std::string &path,
+                                            const std::string &uri);
 };
 
 #endif
