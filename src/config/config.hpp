@@ -42,7 +42,6 @@ class Config {
 
     Config(const Config &other);
 
-
 #pragma endregion
 
 #pragma region Getters

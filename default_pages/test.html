@@ -13,7 +13,12 @@
 	<img src="42_logo.svg" alt="svg">
 	<img src="page.png" alt="png">
 	<form action="/upload" method="post" enctype="multipart/form-data">
-		<input type="file" name="value" id="value" accept="file">
+		<input type="file" name="image" id="image" accept="image/*">
 		<button type="submit">Submit</button>
+	</form>
+	<form action="/upload" method="post">
+		<input type="text" name="value" id="value" accept="text">
+		<button type="submit">Submit</button>
+            </form>
 </body>
 </html>

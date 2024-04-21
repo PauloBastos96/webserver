@@ -10,14 +10,11 @@
 
 typedef struct stat Stat;
 
-enum redirectionType {
-    REDIRECT_307,
-    REDIRECT_308
-};
+enum redirectionType { REDIRECT_307, REDIRECT_308 };
 
 class HttpHandler {
   public:
-    HttpHandler(const std::string &request, Server &server);
+    HttpHandler(const std::string &request, Server &server, Client &client);
 
     ~HttpHandler();
 
@@ -26,6 +23,7 @@ class HttpHandler {
   private:
     Server *server_;
     std::map<std::string, std::string> headers_;
+    Client *client_;
 
     std::string process_get();
 
