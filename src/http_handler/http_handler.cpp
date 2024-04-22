@@ -15,6 +15,50 @@ HttpHandler::HttpHandler(const std::string &request, Server &server,
 
 HttpHandler::~HttpHandler() {}
 
+/// @brief Check if the request has a redirection
+/// @param uri The URI of the request
+/// @return True if the request has a redirection, false otherwise
+bool HttpHandler::has_redirection(const std::string &uri) {
+    std::vector<Location> locations = server_->get_locations();
+    for (size_t i = 0; i < locations.size(); i++) {
+        if (uri == locations.at(i).get_path() &&
+            !locations.at(i).get_config().get_redirection().empty())
+            return true;
+    }
+    if (!server_->get_config().get_redirection().empty())
+        return true;
+    return false;
+}
+
+std::string HttpHandler::create_redirection_response() {
+    enum redirectionType type;
+    std::string response;
+    std::string redirection;
+
+    redirection = server_->get_config().get_redirection();
+    for (size_t i = 0; i < server_->get_locations().size(); i++) {
+        if (headers_.at("uri") == server_->get_locations().at(i).get_path()) {
+            redirection =
+                server_->get_locations().at(i).get_config().get_redirection();
+            break;
+        }
+    }
+    if (redirection.substr(redirection.find_last_of(' ') + 1) == "redirect")
+        type = REDIRECT_307;
+    else
+        type = REDIRECT_308;
+    if (type == REDIRECT_307)
+        response = "HTTP/1.1 307 Temporary Redirect\r\n";
+    else
+        response = "HTTP/1.1 308 Permanent Redirect\r\n";
+    response +=
+        "Location: " + redirection.substr(0, redirection.find_last_of(' ')) +
+        "\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n";
+    WebServer::log(std::string(type == REDIRECT_307 ? HTTP_307 : HTTP_308) +
+                       headers_.at("uri"),
+                   info);
+    return response;
+}
 #pragma region HTTP Methods
 
 /// @brief Process the request
@@ -168,6 +212,27 @@ bool HttpHandler::is_method_allowed(const std::string &method) {
     return true;
 }
 
+/// @brief Check if the server should generate an autoindex page
+/// @param uri The URI of the request
+/// @param server A reference to the server
+/// @return True if the server should generate an autoindex page, false
+/// otherwise
+bool should_generate_autoindex(const std::string &uri, Server &server) {
+    if (uri == "/" && server.get_config().get_auto_index())
+        return true;
+    else if (*(uri.end() - 1) == '/') {
+        std::vector<Location> locations = server.get_locations();
+        if (locations.empty() && server.get_config().get_auto_index())
+            return true;
+        for (size_t i = 0; i < locations.size(); i++) {
+            if (uri == locations.at(i).get_path() &&
+                locations.at(i).get_config().get_auto_index())
+                return true;
+        }
+    }
+    return false;
+}
+
 /// @brief Get the path of the location
 /// @param uri The URI of the request
 /// @return The path of the location
@@ -219,4 +284,5 @@ std::string HttpHandler::get_file_path(const std::string &uri) {
     }
     return file_path;
 }
+
 #pragma endregion
