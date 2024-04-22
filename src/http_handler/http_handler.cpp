@@ -8,57 +8,14 @@
 HttpHandler::HttpHandler(const std::string &request, Server &server,
                          Client &client)
     : server_(&server), client_(&client) {
-    HttpParser parser(request);
-    headers_ = parser.get_headers();
+  HttpParser parser(request);
+  headers_ = parser.get_headers();
   error_page_handler_ = ErrorPageHandler(*server_, headers_);
+  (void)client_;
 }
 
 HttpHandler::~HttpHandler() {}
 
-/// @brief Check if the request has a redirection
-/// @param uri The URI of the request
-/// @return True if the request has a redirection, false otherwise
-bool HttpHandler::has_redirection(const std::string &uri) {
-    std::vector<Location> locations = server_->get_locations();
-    for (size_t i = 0; i < locations.size(); i++) {
-        if (uri == locations.at(i).get_path() &&
-            !locations.at(i).get_config().get_redirection().empty())
-            return true;
-    }
-    if (!server_->get_config().get_redirection().empty())
-        return true;
-    return false;
-}
-
-std::string HttpHandler::create_redirection_response() {
-    enum redirectionType type;
-    std::string response;
-    std::string redirection;
-
-    redirection = server_->get_config().get_redirection();
-    for (size_t i = 0; i < server_->get_locations().size(); i++) {
-        if (headers_.at("uri") == server_->get_locations().at(i).get_path()) {
-            redirection =
-                server_->get_locations().at(i).get_config().get_redirection();
-            break;
-        }
-    }
-    if (redirection.substr(redirection.find_last_of(' ') + 1) == "redirect")
-        type = REDIRECT_307;
-    else
-        type = REDIRECT_308;
-    if (type == REDIRECT_307)
-        response = "HTTP/1.1 307 Temporary Redirect\r\n";
-    else
-        response = "HTTP/1.1 308 Permanent Redirect\r\n";
-    response +=
-        "Location: " + redirection.substr(0, redirection.find_last_of(' ')) +
-        "\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n";
-    WebServer::log(std::string(type == REDIRECT_307 ? HTTP_307 : HTTP_308) +
-                       headers_.at("uri"),
-                   info);
-    return response;
-}
 #pragma region HTTP Methods
 
 /// @brief Process the request
@@ -149,67 +106,67 @@ std::string HttpHandler::process_delete() {
 /// @param uri The URI of the request
 /// @return True if the request has a redirection, false otherwise
 bool HttpHandler::has_redirection(const std::string &uri) {
-    std::vector<Location> locations = server_->get_locations();
-    for (size_t i = 0; i < locations.size(); i++) {
-        if (uri == locations.at(i).get_path() &&
-            !locations.at(i).get_config().get_redirection().empty())
-            return true;
-    }
-    if (!server_->get_config().get_redirection().empty())
-        return true;
-    return false;
+  std::vector<Location> locations = server_->get_locations();
+  for (size_t i = 0; i < locations.size(); i++) {
+    if (uri == locations.at(i).get_path() &&
+        !locations.at(i).get_config().get_redirection().empty())
+      return true;
+  }
+  if (!server_->get_config().get_redirection().empty())
+    return true;
+  return false;
 }
 
 /// @brief Create a redirection response
 /// @return The redirection response
 std::string HttpHandler::create_redirection_response() {
-    enum redirectionType type;
-    std::string response;
-    std::string redirection;
+  enum redirectionType type;
+  std::string response;
+  std::string redirection;
 
-    redirection = server_->get_config().get_redirection();
-    for (size_t i = 0; i < server_->get_locations().size(); i++) {
-        if (headers_.at("uri") == server_->get_locations().at(i).get_path()) {
-            redirection =
-                server_->get_locations().at(i).get_config().get_redirection();
-            break;
-        }
+  redirection = server_->get_config().get_redirection();
+  for (size_t i = 0; i < server_->get_locations().size(); i++) {
+    if (headers_.at("uri") == server_->get_locations().at(i).get_path()) {
+      redirection =
+          server_->get_locations().at(i).get_config().get_redirection();
+      break;
     }
-    if (redirection.substr(redirection.find_last_of(' ') + 1) == "redirect")
-        type = REDIRECT_307;
-    else
-        type = REDIRECT_308;
-    if (type == REDIRECT_307)
-        response = "HTTP/1.1 307 Temporary Redirect\r\n";
-    else
-        response = "HTTP/1.1 308 Permanent Redirect\r\n";
-    response +=
-        "Location: " + redirection.substr(0, redirection.find_last_of(' ')) +
-        "\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n";
-    WebServer::log(std::string(type == REDIRECT_307 ? HTTP_307 : HTTP_308) +
-                       headers_.at("uri"),
-                   info);
-    return response;
+  }
+  if (redirection.substr(redirection.find_last_of(' ') + 1) == "redirect")
+    type = REDIRECT_307;
+  else
+    type = REDIRECT_308;
+  if (type == REDIRECT_307)
+    response = "HTTP/1.1 307 Temporary Redirect\r\n";
+  else
+    response = "HTTP/1.1 308 Permanent Redirect\r\n";
+  response +=
+      "Location: " + redirection.substr(0, redirection.find_last_of(' ')) +
+      "\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n";
+  WebServer::log(std::string(type == REDIRECT_307 ? HTTP_307 : HTTP_308) +
+                     headers_.at("uri"),
+                 info);
+  return response;
 }
 
 /// @brief Check if the method is allowed for the location
 /// @param method The method to check
 /// @return True if the method is allowed, false otherwise
 bool HttpHandler::is_method_allowed(const std::string &method) {
-    std::string location =
-        headers_.at("uri").substr(0, headers_.at("uri").find_last_of('/'));
-    std::vector<Location> locations = server_->get_locations();
-    for (size_t i = 0; i < locations.size(); i++) {
-        if (location == locations.at(i).get_path()) {
-            for (size_t j = 0; j < locations.at(i).get_allowed_methods().size();
-                 j++) {
-                if (method == locations.at(i).get_allowed_methods().at(j))
-                    return true;
-            }
-            return false;
-        }
+  std::string location =
+      headers_.at("uri").substr(0, headers_.at("uri").find_last_of('/'));
+  std::vector<Location> locations = server_->get_locations();
+  for (size_t i = 0; i < locations.size(); i++) {
+    if (location == locations.at(i).get_path()) {
+      for (size_t j = 0; j < locations.at(i).get_allowed_methods().size();
+           j++) {
+        if (method == locations.at(i).get_allowed_methods().at(j))
+          return true;
+      }
+      return false;
     }
-    return true;
+  }
+  return true;
 }
 
 /// @brief Check if the server should generate an autoindex page
@@ -218,71 +175,69 @@ bool HttpHandler::is_method_allowed(const std::string &method) {
 /// @return True if the server should generate an autoindex page, false
 /// otherwise
 bool should_generate_autoindex(const std::string &uri, Server &server) {
-    if (uri == "/" && server.get_config().get_auto_index())
+  if (uri == "/" && server.get_config().get_auto_index())
+    return true;
+  else if (*(uri.end() - 1) == '/') {
+    std::vector<Location> locations = server.get_locations();
+    if (locations.empty() && server.get_config().get_auto_index())
+      return true;
+    for (size_t i = 0; i < locations.size(); i++) {
+      if (uri == locations.at(i).get_path() &&
+          locations.at(i).get_config().get_auto_index())
         return true;
-    else if (*(uri.end() - 1) == '/') {
-        std::vector<Location> locations = server.get_locations();
-        if (locations.empty() && server.get_config().get_auto_index())
-            return true;
-        for (size_t i = 0; i < locations.size(); i++) {
-            if (uri == locations.at(i).get_path() &&
-                locations.at(i).get_config().get_auto_index())
-                return true;
-        }
     }
-    return false;
+  }
+  return false;
 }
 
 /// @brief Get the path of the location
 /// @param uri The URI of the request
 /// @return The path of the location
 std::string HttpHandler::get_location_path(const std::string &uri) {
-    std::string path;
-    std::vector<Location> locations = server_->get_locations();
-    Stat buffer;
+  std::string path;
+  std::vector<Location> locations = server_->get_locations();
+  Stat buffer;
 
-    for (size_t i = 0; i < locations.size(); i++) {
-        if (uri == locations.at(i).get_path()) {
-            std::vector<std::string> indexes =
-                locations.at(i).get_config().get_indexes();
-            for (size_t j = 0; j < indexes.size(); j++) {
-                path = server_->get_config().get_root() +
-                       locations.at(i).get_config().get_root() + "/" +
-                       indexes.at(j);
-                if (stat(path.c_str(), &buffer) == 0)
-                    return path;
-            }
-        } else {
-            path = server_->get_config().get_root() + uri;
-            if (stat(path.c_str(), &buffer) == 0)
-                break;
-        }
+  for (size_t i = 0; i < locations.size(); i++) {
+    if (uri == locations.at(i).get_path()) {
+      std::vector<std::string> indexes =
+          locations.at(i).get_config().get_indexes();
+      for (size_t j = 0; j < indexes.size(); j++) {
+        path = server_->get_config().get_root() +
+               locations.at(i).get_config().get_root() + "/" + indexes.at(j);
+        if (stat(path.c_str(), &buffer) == 0)
+          return path;
+      }
+    } else {
+      path = server_->get_config().get_root() + uri;
+      if (stat(path.c_str(), &buffer) == 0)
+        break;
     }
-    return path;
+  }
+  return path;
 }
 
 /// @brief Get the path of the requested file
 /// @param uri The URI of the request
 /// @return The path of the requested file
 std::string HttpHandler::get_file_path(const std::string &uri) {
-    std::string file_path;
-    Stat buffer;
+  std::string file_path;
+  Stat buffer;
 
-    if (uri == "/") {
-        for (size_t i = 0; i < server_->get_config().get_indexes().size();
-             i++) {
-            file_path = server_->get_config().get_root() + "/" +
-                        server_->get_config().get_indexes().at(i);
-            if (stat(file_path.c_str(), &buffer) == 0)
-                break;
-        }
-    } else {
-        if (server_->get_locations().empty())
-            file_path = server_->get_config().get_root() + uri;
-        else
-            file_path = get_location_path(uri);
+  if (uri == "/") {
+    for (size_t i = 0; i < server_->get_config().get_indexes().size(); i++) {
+      file_path = server_->get_config().get_root() + "/" +
+                  server_->get_config().get_indexes().at(i);
+      if (stat(file_path.c_str(), &buffer) == 0)
+        break;
     }
-    return file_path;
+  } else {
+    if (server_->get_locations().empty())
+      file_path = server_->get_config().get_root() + uri;
+    else
+      file_path = get_location_path(uri);
+  }
+  return file_path;
 }
 
 #pragma endregion

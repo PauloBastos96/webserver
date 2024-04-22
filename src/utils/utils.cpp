@@ -2,6 +2,7 @@
 #include <dirent.h>
 #include <fstream>
 #include <stdlib.h>
+#include <iomanip>
 
 Utils::Utils(void) {}
 Utils::~Utils() {}
@@ -129,6 +130,28 @@ bool Utils::should_generate_autoindex(const std::string &uri, Server &server) {
   return false;
 }
 
+/// @brief Convert the size of a file to a human-readable format
+/// @param size The size of the file in bytes
+/// @return The size of the file in a human-readable format (e.g. 1 KB, 2 MB)
+static std::string size_converter(off_t size) {
+  std::string size_str;
+  std::stringstream ss;
+  float fsize = static_cast<float>(size);
+  long KB = 1024;
+  long MB = 1024 * 1024;
+  long GB = 1024 * 1024 * 1024;
+
+  if (size < KB)
+    return (ss << size, ss.str() + " B");
+  if (size < MB)
+    return (ss << std::fixed << std::setprecision(2) << fsize / KB, ss.str() + " KB");
+  if (size < GB)
+    return (ss << std::fixed << std::setprecision(2) << fsize / MB, ss.str() + " MB");
+  if (size < GB * 1024)
+    return (ss << std::fixed << std::setprecision(2) << fsize / GB, ss.str() + " GB");
+  return (ss << size, ss.str() + " B");
+}
+
 /// @brief Create an autoindex page
 /// @param path The path of the directory
 /// @param uri The URI of the directory
@@ -147,17 +170,17 @@ const std::string Utils::create_autoindex(const std::string &path,
   if ((dir = opendir(path.c_str())) != NULL) {
     while ((ent = readdir(dir)) != NULL) {
       struct stat st;
-      std::stringstream ss;
+      std::string size;
       std::string file_path = path + "/" + std::string(ent->d_name);
       stat(file_path.c_str(), &st);
-      ss << st.st_size;
+      size = size_converter(st.st_size);
       std::string itemName = S_ISDIR(st.st_mode)
                                  ? std::string(ent->d_name) + "/"
                                  : std::string(ent->d_name);
       autoindex +=
           "<tr>\n<td><a href=\"" + itemName + "\">" + itemName + "</a></td>\n";
       autoindex += "<td>" + std::string(ctime(&st.st_mtime)) + "</td>\n";
-      autoindex += "<td>" + ss.str() + " B</td>\n</tr>\n";
+      autoindex += "<td>" + size + "</td>\n</tr>\n";
     }
     closedir(dir);
   } else {
