@@ -1,8 +1,8 @@
 #include "utils.hpp"
 #include <dirent.h>
 #include <fstream>
-#include <stdlib.h>
 #include <iomanip>
+#include <stdlib.h>
 
 Utils::Utils(void) {}
 Utils::~Utils() {}
@@ -45,10 +45,13 @@ std::string Utils::read_file(const std::string &file_path) {
 std::string Utils::response_builder(const std::string &status_code,
                                     const std::string &status_message,
                                     const std::string &content_type,
-                                    const std::string &content_length) {
+                                    const long &content_length) {
+  std::stringstream ss;
+
+  ss << content_length;
   std::string response = "HTTP/1.1 " + status_code + " " + status_message +
                          "\r\n" + "Content-Type: " + content_type + "\r\n" +
-                         "Content-Length:" + content_length + "\r\n\r\n";
+                         "Content-Length:" + ss.str() + "\r\n\r\n";
   return (response);
 }
 
@@ -144,11 +147,14 @@ static std::string size_converter(off_t size) {
   if (size < KB)
     return (ss << size, ss.str() + " B");
   if (size < MB)
-    return (ss << std::fixed << std::setprecision(2) << fsize / KB, ss.str() + " KB");
+    return (ss << std::fixed << std::setprecision(2) << fsize / KB,
+            ss.str() + " KB");
   if (size < GB)
-    return (ss << std::fixed << std::setprecision(2) << fsize / MB, ss.str() + " MB");
+    return (ss << std::fixed << std::setprecision(2) << fsize / MB,
+            ss.str() + " MB");
   if (size < GB * 1024)
-    return (ss << std::fixed << std::setprecision(2) << fsize / GB, ss.str() + " GB");
+    return (ss << std::fixed << std::setprecision(2) << fsize / GB,
+            ss.str() + " GB");
   return (ss << size, ss.str() + " B");
 }
 
