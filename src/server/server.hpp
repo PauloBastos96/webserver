@@ -1,6 +1,7 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
+#include <client.hpp>
 #include <config.hpp>
 #include <location.hpp>
 #include <string>
@@ -40,7 +41,7 @@ class Server {
 
     const int &get_socket() const;
 
-    std::vector<int> &get_connected_clients();
+    std::vector<Client> &get_connected_clients();
 
 #pragma endregion
 
@@ -63,7 +64,7 @@ class Server {
     Config config_;
     std::vector<Location> locations_;
     int socket_;
-    std::vector<int> connected_clients_;
+    std::vector<Client> connected_clients_;
 };
 
 #endif

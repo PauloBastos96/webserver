@@ -40,13 +40,13 @@ class WebServer {
 
     bool is_server(int socket);
 
-    void send_response(const int socket);
+    void send_response(Client &client);
 
-    void accept_connection(Server &server, int socket) const;
+    void accept_connection(Server &server) const;
 
-    void handle_connection(Server &server, const int socket);
+    void handle_connection(Server &server, Client &client);
 
-    void end_connection(Server &server, int socket);
+    void end_connection(Server &server, Client &client);
 
 #pragma endregion
 
@@ -55,7 +55,7 @@ class WebServer {
     static std::ofstream log_file_;
     int epoll_fd_;
     epoll_event events_[MAX_EVENTS];
-    std::map<int, std::string> responses_;
+    std::vector<Client>::iterator find_client(int socket);
 };
 
 #endif
