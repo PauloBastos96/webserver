@@ -14,63 +14,55 @@ ErrorPageHandler::~ErrorPageHandler() {}
 std::string ErrorPageHandler::get_error_page(const int status_code) {
   std::string content;
   std::string path;
-  std::stringstream ss;
 
   try {
     switch (status_code) {
     case 400:
       content = Utils::read_file(get_error_page_path(400));
-      ss << content.length();
       WebServer::log(std::string(HTTP_400) + headers_.at("uri"), warning);
       return Utils::response_builder("400", "Bad Request", "text/html",
-                                     ss.str()) +
+                                     content.length()) +
              content;
     case 403:
       content = Utils::read_file(get_error_page_path(403));
-      ss << content.length();
       WebServer::log(std::string(HTTP_403) + headers_.at("uri"), warning);
       return Utils::response_builder("403", "Forbidden", "text/html",
-                                     ss.str()) +
+                                     content.length()) +
              content;
     case 404:
       content = Utils::read_file(get_error_page_path(404));
-      ss << content.length();
       WebServer::log(std::string(HTTP_404) + headers_.at("uri"), warning);
       return Utils::response_builder("404", "Not Found", "text/html",
-                                     ss.str()) +
+                                     content.length()) +
              content;
     case 405:
       content = Utils::read_file(get_error_page_path(405));
-      ss << content.length();
       WebServer::log(std::string(HTTP_405) + headers_.at("uri"), warning);
       return Utils::response_builder("405", "Method Not Allowed", "text/html",
-                                     ss.str()) +
+                                     content.length()) +
              content;
     case 413:
       content = Utils::read_file(get_error_page_path(413));
-      ss << content.length();
       WebServer::log(std::string(HTTP_413) + headers_.at("uri"), warning);
       return Utils::response_builder("413", "Content Too Large", "text/html",
-                                     ss.str()) +
+                                     content.length()) +
              content;
     case 501:
       content = Utils::read_file(get_error_page_path(501));
-      ss << content.length();
       WebServer::log(std::string(HTTP_501) + headers_.at("uri"), warning);
       return Utils::response_builder("501", "Not Implemented", "text/html",
-                                     ss.str()) +
+                                     content.length()) +
              content;
     default:
       content = Utils::read_file(get_error_page_path(500));
-      ss << content.length();
       WebServer::log(std::string(HTTP_500) + headers_.at("uri"), warning);
       return Utils::response_builder("500", "Internal Server Error",
-                                     "text/html", ss.str()) +
+                                     "text/html", content.length()) +
              content;
     }
   } catch (...) {
     return Utils::response_builder("500", "Internal Server Error", "text/plain",
-                                   "22") +
+                                   22) +
            " Internal Server Error";
   }
 }

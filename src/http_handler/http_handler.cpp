@@ -42,8 +42,8 @@ std::string HttpHandler::process_get() {
   std::fstream file;
   std::string content;
   std::string file_path;
-  std::stringstream ss;
   Stat buffer;
+
   try {
     file_path = get_file_path(headers_.at("uri"));
     if (Utils::should_generate_autoindex(headers_.at("uri"), *server_)) {
@@ -51,18 +51,16 @@ std::string HttpHandler::process_get() {
       content = Utils::create_autoindex(file_path, headers_.at("uri"));
       if (content.empty())
         return error_page_handler_.get_error_page(404);
-      ss << content.length();
       std::string response =
-          Utils::response_builder("200", "OK", "text/html", ss.str());
+          Utils::response_builder("200", "OK", "text/html", content.length());
       WebServer::log(std::string(HTTP_200) + headers_.at("uri"), info);
       return response + content;
     }
     if (stat(file_path.c_str(), &buffer) != 0 || S_ISDIR(buffer.st_mode))
       throw std::runtime_error("404");
     content = Utils::read_file(file_path);
-    ss << content.length();
     std::string response = Utils::response_builder(
-        "200", "OK", Utils::get_content_type(file_path), ss.str());
+        "200", "OK", Utils::get_content_type(file_path), content.length());
     WebServer::log(std::string(HTTP_200) + headers_.at("uri"), info);
     return response + content;
   } catch (const std::runtime_error &e) {
@@ -77,9 +75,8 @@ std::string HttpHandler::process_post() {
   if (headers_.at("body").size() > max_size)
     return error_page_handler_.get_error_page(413);
   std::string response = "Received" + headers_.at("body");
-  std::stringstream ss;
-  ss << response.length();
-  return Utils::response_builder("201", "Created", "text/plain", ss.str()) +
+  return Utils::response_builder("201", "Created", "text/plain",
+                                 response.length()) +
          response;
 }
 
@@ -95,7 +92,7 @@ std::string HttpHandler::process_delete() {
     return error_page_handler_.get_error_page(403);
   if (std::remove(file_path.c_str()))
     return error_page_handler_.get_error_page(403);
-  return Utils::response_builder("204", "No Content", "text/plain", "0");
+  return Utils::response_builder("204", "No Content", "text/plain", 0);
 }
 
 #pragma endregion
