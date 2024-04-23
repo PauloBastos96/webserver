@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-HttpHandler::HttpHandler(const std::string &request, Server &server,
+HttpHandler::HttpHandler(const string &request, Server &server,
                          Client &client)
     : server_(&server), client_(&client) {
   HttpParser parser(request);
@@ -21,7 +21,7 @@ HttpHandler::~HttpHandler() {}
 
 /// @brief Process a HTTP request
 /// @return The response created by the request
-std::string HttpHandler::process_request() {
+string HttpHandler::process_request() {
   if (is_cgi_script())
     return process_cgi();
   if (!is_method_allowed(headers_.at("method")))
@@ -44,10 +44,10 @@ std::string HttpHandler::process_request() {
 /// @return The response created by the CGI script
 string HttpHandler::process_cgi() {
   try {
-    std::string cgi_script_path = get_file_path(headers_.at("uri"));
+    string cgi_script_path = get_file_path(headers_.at("uri"));
     if (access(cgi_script_path.c_str(), X_OK) == -1)
       return error_page_handler_.get_error_page(403);
-    std::string extension =
+    string extension =
         headers_.at("uri").substr(headers_.at("uri").find_last_of('.') + 1);
     char *args[3];
     if (extension == "py")
@@ -67,13 +67,13 @@ string HttpHandler::process_cgi() {
       close(pipefd[0]);
       dup2(pipefd[1], STDOUT_FILENO);
       close(pipefd[1]);
-      if (execve(path_finder(args[0]).c_str(), args, envp) == -1)
+      if (execve(Utils::path_finder(args[0]).c_str(), args, envp) == -1)
         std::exit(EXIT_FAILURE);
     }
     // TODO handle timeout
     close(pipefd[1]);
     char buffer[1024];
-    std::string cgi_output;
+    string cgi_output;
     ssize_t n;
     while ((n = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
       buffer[n] = '\0';
@@ -82,7 +82,7 @@ string HttpHandler::process_cgi() {
     close(pipefd[0]);
     if (cgi_output.empty())
       return error_page_handler_.get_error_page(502);
-    std::string response =
+    string response =
         Utils::response_builder("200", "OK", "text/html", cgi_output.length());
     response += cgi_output;
     WebServer::log(response, debug);
@@ -94,10 +94,10 @@ string HttpHandler::process_cgi() {
 }
 
 /// @brief Process a GET request
-std::string HttpHandler::process_get() {
+string HttpHandler::process_get() {
   std::fstream file;
-  std::string content;
-  std::string file_path;
+  string content;
+  string file_path;
   Stat buffer;
 
   try {
@@ -107,17 +107,17 @@ std::string HttpHandler::process_get() {
       content = Utils::create_autoindex(file_path, headers_.at("uri"));
       if (content.empty())
         return error_page_handler_.get_error_page(404);
-      std::string response =
+      string response =
           Utils::response_builder("200", "OK", "text/html", content.length());
-      WebServer::log(std::string(HTTP_200) + headers_.at("uri"), info);
+      WebServer::log(string(HTTP_200) + headers_.at("uri"), info);
       return response + content;
     }
     if (stat(file_path.c_str(), &buffer) != 0 || S_ISDIR(buffer.st_mode))
       throw std::runtime_error("404");
     content = Utils::read_file(file_path);
-    std::string response = Utils::response_builder(
+    string response = Utils::response_builder(
         "200", "OK", Utils::get_content_type(file_path), content.length());
-    WebServer::log(std::string(HTTP_200) + headers_.at("uri"), info);
+    WebServer::log(string(HTTP_200) + headers_.at("uri"), info);
     return response + content;
   } catch (const std::runtime_error &e) {
     return error_page_handler_.get_error_page(404);
@@ -125,20 +125,20 @@ std::string HttpHandler::process_get() {
 }
 
 /// @brief Process a POST request
-std::string HttpHandler::process_post() {
+string HttpHandler::process_post() {
   size_t max_size =
       Utils::get_max_size(server_->get_config().get_max_client_body_size());
   if (headers_.at("body").size() > max_size)
     return error_page_handler_.get_error_page(413);
-  std::string response = "Received" + headers_.at("body");
+  string response = "Received" + headers_.at("body");
   return Utils::response_builder("201", "Created", "text/plain",
                                  response.length()) +
          response;
 }
 
 /// @brief Process a DELETE request
-std::string HttpHandler::process_delete() {
-  std::string file_path;
+string HttpHandler::process_delete() {
+  string file_path;
   Stat buffer;
 
   file_path = server_->get_config().get_root() + headers_.at("uri");
@@ -158,38 +158,17 @@ std::string HttpHandler::process_delete() {
 /// @brief Check if the request is a CGI script
 /// @return True if the request is a CGI script, false otherwise
 bool HttpHandler::is_cgi_script() {
-  std::string extension =
+  string extension =
       headers_.at("uri").substr(headers_.at("uri").find_last_of('.') + 1);
   if (extension == "py" || extension == "php")
     return true;
   return false;
 }
 
-/// @brief Try to find the path of a cgi program
-/// @param command The command to find
-/// @return The path of the cgi program
-std::string path_finder(const std::string &command) {
-  std::string path;
-  std::string env_path = std::getenv("PATH");
-  if (env_path.empty())
-    return "";
-  std::vector<std::string> paths;
-  std::stringstream ss(env_path);
-  std::string item;
-  while (std::getline(ss, item, ':'))
-    paths.push_back(item);
-  for (size_t i = 0; i < paths.size(); i++) {
-    path = paths.at(i) + "/" + command;
-    if (access(path.c_str(), X_OK) == 0)
-      return path;
-  }
-  return "";
-}
-
 /// @brief Check if the request has a redirection
 /// @param uri The URI of the request
 /// @return True if the request has a redirection, false otherwise
-bool HttpHandler::has_redirection(const std::string &uri) {
+bool HttpHandler::has_redirection(const string &uri) {
   std::vector<Location> locations = server_->get_locations();
   for (size_t i = 0; i < locations.size(); i++) {
     if (uri == locations.at(i).get_path() &&
@@ -203,10 +182,10 @@ bool HttpHandler::has_redirection(const std::string &uri) {
 
 /// @brief Create a redirection response
 /// @return The redirection response
-std::string HttpHandler::create_redirection_response() {
+string HttpHandler::create_redirection_response() {
   enum redirectionType type;
-  std::string response;
-  std::string redirection;
+  string response;
+  string redirection;
 
   redirection = server_->get_config().get_redirection();
   for (size_t i = 0; i < server_->get_locations().size(); i++) {
@@ -227,7 +206,7 @@ std::string HttpHandler::create_redirection_response() {
   response +=
       "Location: " + redirection.substr(0, redirection.find_last_of(' ')) +
       "\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n";
-  WebServer::log(std::string(type == REDIRECT_307 ? HTTP_307 : HTTP_308) +
+  WebServer::log(string(type == REDIRECT_307 ? HTTP_307 : HTTP_308) +
                      headers_.at("uri"),
                  info);
   return response;
@@ -236,8 +215,8 @@ std::string HttpHandler::create_redirection_response() {
 /// @brief Check if the method is allowed for the location
 /// @param method The method to check
 /// @return True if the method is allowed, false otherwise
-bool HttpHandler::is_method_allowed(const std::string &method) {
-  std::string location =
+bool HttpHandler::is_method_allowed(const string &method) {
+  string location =
       headers_.at("uri").substr(0, headers_.at("uri").find_last_of('/'));
   std::vector<Location> locations = server_->get_locations();
   for (size_t i = 0; i < locations.size(); i++) {
@@ -258,7 +237,7 @@ bool HttpHandler::is_method_allowed(const std::string &method) {
 /// @param server A reference to the server
 /// @return True if the server should generate an autoindex page, false
 /// otherwise
-bool should_generate_autoindex(const std::string &uri, Server &server) {
+bool should_generate_autoindex(const string &uri, Server &server) {
   if (uri == "/" && server.get_config().get_auto_index())
     return true;
   else if (*(uri.end() - 1) == '/') {
@@ -277,14 +256,14 @@ bool should_generate_autoindex(const std::string &uri, Server &server) {
 /// @brief Get the path of the location
 /// @param uri The URI of the request
 /// @return The path of the location
-std::string HttpHandler::get_location_path(const std::string &uri) {
-  std::string path;
+string HttpHandler::get_location_path(const string &uri) {
+  string path;
   std::vector<Location> locations = server_->get_locations();
   Stat buffer;
 
   for (size_t i = 0; i < locations.size(); i++) {
     if (uri == locations.at(i).get_path()) {
-      std::vector<std::string> indexes =
+      std::vector<string> indexes =
           locations.at(i).get_config().get_indexes();
       for (size_t j = 0; j < indexes.size(); j++) {
         path = server_->get_config().get_root() +
@@ -304,8 +283,8 @@ std::string HttpHandler::get_location_path(const std::string &uri) {
 /// @brief Get the path of the requested file
 /// @param uri The URI of the request
 /// @return The path of the requested file
-std::string HttpHandler::get_file_path(const std::string &uri) {
-  std::string file_path;
+string HttpHandler::get_file_path(const string &uri) {
+  string file_path;
   Stat buffer;
 
   if (uri == "/") {

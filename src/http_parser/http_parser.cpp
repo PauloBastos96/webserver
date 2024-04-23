@@ -14,10 +14,10 @@ void HttpParser::parse_request(const string &request) {
     headers_["uri"] = request.substr(uri_start, pos - uri_start);
   else
     WebServer::log("Invalid HTTP request: no URI", error);
-  std::string::size_type start = request.find("\r\n") + 2, end, separator;
-  while ((end = request.find("\r\n", start)) != std::string::npos) {
-    std::string line = request.substr(start, end - start);
-    if ((separator = line.find(": ")) != std::string::npos)
+  size_t start = request.find("\r\n") + 2, end, separator;
+  while ((end = request.find("\r\n", start)) != string::npos) {
+    string line = request.substr(start, end - start);
+    if ((separator = line.find(": ")) != string::npos)
       headers_[line.substr(0, separator)] = line.substr(separator + 2);
     start = end + 2;
   }
