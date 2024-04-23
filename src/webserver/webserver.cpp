@@ -187,7 +187,6 @@ void WebServer::handle_connection(Server &server, Client &client) {
         return;
     }
     const std::string data_received(buffer);
-    log(data_received, debug);
     HttpHandler http_handler(data_received, server, client);
     client.set_response(http_handler.process_request());
 }
