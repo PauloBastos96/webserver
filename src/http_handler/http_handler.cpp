@@ -37,6 +37,7 @@ std::string HttpHandler::process_request() {
     else
         return error_page_handler_.get_error_page(400);
 }
+
 bool HttpHandler::is_cgi_script() {
     std::string extension =
         headers_.at("uri").substr(headers_.at("uri").find_last_of('.') + 1);
@@ -44,6 +45,7 @@ bool HttpHandler::is_cgi_script() {
         return true;
     return false;
 }
+
 std::string path_finder(const std::string &command) {
     std::string path;
     std::string env_path = std::getenv("PATH");
@@ -61,6 +63,7 @@ std::string path_finder(const std::string &command) {
     }
     return "";
 }
+
 string HttpHandler::process_cgi() {
     try {
         std::string cgi_script_path = get_file_path(headers_.at("uri"));
@@ -69,16 +72,12 @@ string HttpHandler::process_cgi() {
         std::string extension =
             headers_.at("uri").substr(headers_.at("uri").find_last_of('.') + 1);
         char *args[3];
-        if (extension == "py") {
+        if (extension == "py")
             args[0] = (char *)"python3";
-            args[1] = (char *)cgi_script_path.c_str();
-            args[2] = NULL;
-        } else if (extension == "php") {
+        else if (extension == "php")
             args[0] = (char *)"php";
-            args[1] = (char *)cgi_script_path.c_str();
-            args[2] = NULL;
-        } else
-            return error_page_handler_.get_error_page(403);
+        args[1] = (char *)cgi_script_path.c_str();
+        args[2] = NULL;
         char **envp = environ;
         int pipefd[2];
         if (pipe(pipefd) == -1)
@@ -93,6 +92,7 @@ string HttpHandler::process_cgi() {
             if (execve(path_finder(args[0]).c_str(), args, envp) == -1)
                 std::exit(EXIT_FAILURE);
         }
+        //TODO handle timeout
         close(pipefd[1]);
         char buffer[1024];
         std::string cgi_output;
@@ -102,6 +102,8 @@ string HttpHandler::process_cgi() {
             cgi_output += buffer;
         }
         close(pipefd[0]);
+        if (cgi_output.empty())
+            return error_page_handler_.get_error_page(502);
         std::string response = Utils::response_builder("200", "OK", "text/html",
                                                        cgi_output.length());
         response += cgi_output;
