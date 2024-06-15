@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <arpa/inet.h>
 #include <cstring>
 #include <fcntl.h>
 #include <http_handler.hpp>
@@ -56,7 +57,10 @@ void WebServer::setup_server_sockets() {
       log("Failed to set server socket to non-blocking mode", warning);
     sockaddr_in address = {};
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
+    string host = it->get_host();
+    in_addr_t ip =
+        host == "localhost" ? inet_addr("127.0.0.1") : inet_addr(host.c_str());
+    address.sin_addr.s_addr = ip;
     address.sin_port = htons(it->get_port());
     if (bind(server_socket, reinterpret_cast<sockaddr *>(&address),
              sizeof(address)))
