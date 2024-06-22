@@ -7,10 +7,10 @@
  * @brief Enum for log levels.
  */
 enum log_level {
-    debug,   ///< Debug log level
-    info,    ///< Informational log level
-    warning, ///< Warning log level
-    error,   ///< Error log level
+  debug,   ///< Debug log level
+  info,    ///< Informational log level
+  warning, ///< Warning log level
+  error,   ///< Error log level
 };
 
 #pragma endregion
